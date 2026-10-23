@@ -93,6 +93,9 @@ function page_app_show(array $params = []): void
         'active' => $vm['lifecycle'] === 'decommissioned' ? 'decom' : 'inventory',
         'vm' => $vm,
         'history' => history_groups('app_vm', (int)$vm['id']),
+        'vmMarks' => vm_marks('app', (int)$vm['id']),
+        'openMarks' => open_mark_options(),
+        'markSide' => 'app',
     ]);
 }
 
@@ -244,6 +247,9 @@ function page_db_show(array $params = []): void
         'active' => $vm['lifecycle'] === 'decommissioned' ? 'decom' : 'inventory',
         'vm' => $vm,
         'history' => history_groups('db_vm', (int)$vm['id']),
+        'vmMarks' => vm_marks('db', (int)$vm['id']),
+        'openMarks' => open_mark_options(),
+        'markSide' => 'db',
     ]);
 }
 

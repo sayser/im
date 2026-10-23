@@ -27,6 +27,13 @@ function audit_actions(): array
         'db_vm.delete' => 'DB VM deleted',
         'db_vm.decommission' => 'DB VM decommissioned',
         'db_vm.restore' => 'DB VM restored',
+        'mark.create' => 'Mark created',
+        'mark.update' => 'Mark updated',
+        'mark.close' => 'Mark closed',
+        'mark.reopen' => 'Mark reopened',
+        'mark.delete' => 'Mark deleted',
+        'mark.members' => 'Mark members changed',
+        'mark_color.update' => 'Mark color updated',
     ];
 }
 

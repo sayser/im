@@ -252,7 +252,7 @@ function hydrate_app_rows(array $rows): array
         $rows[$i]['applications'] = $apps[$id] ?? [];
         $rows[$i]['db_vms'] = $dbs[$id] ?? [];
     }
-    return $rows;
+    return attach_open_marks($rows, 'app');
 }
 
 function hydrate_db_rows(array $rows): array
@@ -277,7 +277,7 @@ function hydrate_db_rows(array $rows): array
         $rows[$i]['redis'] = (int)$row['redis'];
         $rows[$i]['app_vms'] = $apps[$id] ?? [];
     }
-    return $rows;
+    return attach_open_marks($rows, 'db');
 }
 
 function app_vm_list(array $filters, string $lifecycle, bool $all = false): array
@@ -523,7 +523,7 @@ function vm_choices(string $which, array $selected): array
 {
     $table = $which === 'app' ? 'app_vms' : 'db_vms';
     $selected = array_values(array_filter(array_map('intval', $selected), static fn(int $id): bool => $id > 0));
-    $sql = 'SELECT v.id, v.name, v.internal_ip, v.lifecycle, c.name AS client_name, e.name AS environment_name
+    $sql = 'SELECT v.id, v.name, v.internal_ip, v.lifecycle, v.zone_id, c.name AS client_name, e.name AS environment_name
             FROM ' . $table . ' v
             JOIN lookups c ON c.id = v.client_id
             JOIN lookups e ON e.id = v.environment_id';
@@ -602,7 +602,7 @@ function applications_problem(array $ids, array $previousIds): ?string
     return null;
 }
 
-function vm_ids_problem(string $table, array $ids): ?string
+function vm_ids_problem(string $table, array $ids, int $zoneId = 0): ?string
 {
     if (!$ids) {
         return null;
@@ -616,6 +616,15 @@ function vm_ids_problem(string $table, array $ids): ?string
     $found = (int)db_val('SELECT COUNT(*) FROM ' . $table . ' WHERE id IN (' . placeholders($ids) . ')', $ids);
     if ($found !== count($ids)) {
         return 'One of the selected VMs is no longer available.';
+    }
+    if ($zoneId > 0) {
+        $sameZone = (int)db_val(
+            'SELECT COUNT(*) FROM ' . $table . ' WHERE zone_id = ? AND id IN (' . placeholders($ids) . ')',
+            array_merge([$zoneId], $ids)
+        );
+        if ($sameZone !== count($ids)) {
+            return 'Link only VMs from the same environment.';
+        }
     }
     return null;
 }
@@ -741,7 +750,7 @@ function validate_app(array $in, ?array $existing): array
     if ($message = applications_problem($in['application_ids'], $prevApps)) {
         $errors['application_ids'] = $message;
     }
-    if ($message = vm_ids_problem('db_vms', $in['db_vm_ids'])) {
+    if ($message = vm_ids_problem('db_vms', $in['db_vm_ids'], (int)$in['zone_id'])) {
         $errors['db_vm_ids'] = $message;
     }
     return $errors;
@@ -843,7 +852,7 @@ function validate_db(array $in, ?array $existing): array
     if (mb_strlen((string)$in['troubleshooting']) > 20000) {
         $errors['troubleshooting'] = 'Troubleshooting is too long.';
     }
-    if ($message = vm_ids_problem('app_vms', $in['app_vm_ids'])) {
+    if ($message = vm_ids_problem('app_vms', $in['app_vm_ids'], (int)$in['zone_id'])) {
         $errors['app_vm_ids'] = $message;
     }
     return $errors;
@@ -1363,6 +1372,7 @@ function dashboard_stats(): array
         'zones' => inventory_breakdown('zone'),
         'environments' => inventory_breakdown('environment'),
         'oses' => inventory_breakdown('os'),
+        'marks' => dashboard_marks(),
         'recent' => recent_activity(8),
     ];
 }

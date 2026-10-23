@@ -113,15 +113,16 @@ $action = $mode === 'edit' ? url('/app-vms/' . (int)$vm['id']) : url('/app-vms')
 
   <fieldset class="picks">
     <legend>DB VMs</legend>
-    <p class="hint">Optional relationship. Link many DB VMs, one DB VM, or none. The stack name above is what places them side by side on the environment tab.</p>
+    <p class="hint">Optional relationship. Only DB VMs in the selected environment are listed. The stack name above is what places them side by side on the environment tab.</p>
     <input type="search" data-filter-target="#db-picks" placeholder="Filter DB VMs" aria-label="Filter DB VMs">
+    <p class="muted" data-zone-empty hidden>No matching DB VMs in this environment.</p>
     <div class="checks scroll" id="db-picks">
       <?php if (!$dbChoices): ?>
         <p class="muted">No DB VMs to link yet.</p>
       <?php endif; ?>
       <?php foreach ($dbChoices as $choice): ?>
         <?php $label = $choice['name'] . ' · ' . $choice['client_name'] . ' · ' . $choice['internal_ip']; ?>
-        <label class="check" data-label="<?= e($label) ?>">
+        <label class="check" data-zone="<?= (int)$choice['zone_id'] ?>" data-label="<?= e($label) ?>">
           <input type="checkbox" name="db_vm_ids[]" value="<?= (int)$choice['id'] ?>"<?= in_array((int)$choice['id'], $input['db_vm_ids'], true) ? ' checked' : '' ?>>
           <span><?= e($label) ?><?= $choice['lifecycle'] === 'decommissioned' ? ' (decommissioned)' : '' ?></span>
         </label>

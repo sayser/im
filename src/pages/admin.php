@@ -119,6 +119,7 @@ function page_lists(): void
         'title' => 'Field options',
         'active' => 'lists',
         'groups' => lookups_admin(),
+        'markColors' => mark_color_admin(),
     ]);
 }
 
