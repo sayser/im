@@ -69,6 +69,8 @@
   </section>
 </div>
 
+<?php require APP_ROOT . '/views/partials/vm_marks.php'; ?>
+
 <section class="card">
   <h2>History</h2>
   <?php require APP_ROOT . '/views/partials/history.php'; ?>

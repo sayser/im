@@ -77,13 +77,30 @@ function safe_path(string $path): string
     if (!str_starts_with($path, '/')) {
         $path = '/' . $path;
     }
-    if (preg_match('#\A/[A-Za-z0-9._~!$&\'()*+,;=:@%/-]*\z#', $path) !== 1) {
+    $query = '';
+    $split = strpos($path, '?');
+    if ($split !== false) {
+        $query = substr($path, $split + 1);
+        $path = substr($path, 0, $split);
+        if (substr_count($query, '?') > 0) {
+            return '/';
+        }
+    }
+    if (!safe_path_piece($path, true) || ($split !== false && !safe_path_piece($query, false))) {
         return '/';
     }
-    if (str_contains($path, '//') || str_contains($path, '\\') || str_contains($path, '..')) {
-        return '/';
+    return $split === false ? $path : $path . '?' . $query;
+}
+
+function safe_path_piece(string $piece, bool $isPath): bool
+{
+    if ($piece === '' || str_contains($piece, '//') || str_contains($piece, '\\') || str_contains($piece, '..')) {
+        return false;
     }
-    return $path;
+    $pattern = $isPath
+        ? '#\A/[A-Za-z0-9._~!$&\'()*+,;=:@%/-]*\z#'
+        : '#\A[A-Za-z0-9._~!$&\'()*+,;=:@%/-]*\z#';
+    return preg_match($pattern, $piece) === 1;
 }
 
 function url(string $path): string

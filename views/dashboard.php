@@ -37,6 +37,14 @@
     <?php endforeach; ?>
   </section>
 
+  <?php
+    $heading = 'Open marks';
+    $rows = $stats['marks'];
+    $href = '/marks/';
+    $appsOnly = false;
+    require APP_ROOT . '/views/partials/dash_panel.php';
+  ?>
+
   <section class="card">
     <div class="card-head">
       <h2>Recent changes</h2>

@@ -6,6 +6,8 @@ require APP_ROOT . '/src/pages/dashboard.php';
 require APP_ROOT . '/src/pages/vms.php';
 require APP_ROOT . '/src/pages/admin.php';
 require APP_ROOT . '/src/pages/audit.php';
+require APP_ROOT . '/src/pages/marks.php';
+require APP_ROOT . '/src/pages/saved_views.php';
 
 function match_route(string $pattern, string $path): ?array
 {
@@ -101,6 +103,18 @@ function dispatch(): void
         ['GET', '/db-vms/{id}/delete', 'page_db_delete_form'],
         ['POST', '/db-vms/{id}/delete', 'page_db_delete'],
         ['GET', '/decom', 'page_decom'],
+        ['GET', '/views', 'page_saved_views'],
+        ['GET', '/views/new', 'page_saved_view_new'],
+        ['POST', '/views', 'page_saved_view_create'],
+        ['GET', '/views/{id}', 'page_saved_view_show'],
+        ['POST', '/views/{id}', 'page_saved_view_update'],
+        ['GET', '/marks', 'page_marks'],
+        ['GET', '/marks/new', 'page_mark_new'],
+        ['POST', '/marks', 'page_mark_create'],
+        ['GET', '/marks/{id}', 'page_mark_show'],
+        ['POST', '/marks/{id}', 'page_mark_update'],
+        ['POST', '/app-vms/{id}/marks', 'page_app_mark'],
+        ['POST', '/db-vms/{id}/marks', 'page_db_mark'],
         ['GET', '/export/app-vms.csv', 'page_export_app'],
         ['GET', '/export/db-vms.csv', 'page_export_db'],
         ['GET', '/audit', 'page_audit'],
@@ -113,6 +127,7 @@ function dispatch(): void
         ['GET', '/lists', 'page_lists'],
         ['POST', '/lists', 'page_lists_create'],
         ['POST', '/lists/{id}', 'page_lists_update'],
+        ['POST', '/mark-colors', 'page_mark_color_update'],
     ];
 
     foreach ($routes as [$routeMethod, $pattern, $handler]) {

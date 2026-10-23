@@ -179,6 +179,87 @@ CREATE TABLE field_history (
   CONSTRAINT fk_hist_audit FOREIGN KEY (audit_event_id) REFERENCES audit_events (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE mark_colors (
+  swatch VARCHAR(32) NOT NULL,
+  name VARCHAR(120) NOT NULL,
+  active TINYINT(1) NOT NULL DEFAULT 1,
+  sort_order INT NOT NULL DEFAULT 100,
+  PRIMARY KEY (swatch),
+  UNIQUE KEY uq_mark_colors_name (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE marks (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  name VARCHAR(120) NOT NULL,
+  swatch VARCHAR(32) NOT NULL,
+  note VARCHAR(500) NULL,
+  status ENUM('open', 'closed') NOT NULL DEFAULT 'open',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  created_by INT UNSIGNED NULL,
+  closed_at DATETIME NULL,
+  closed_by INT UNSIGNED NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_marks_name (name),
+  KEY idx_marks_status (status, name),
+  CONSTRAINT fk_mark_swatch FOREIGN KEY (swatch) REFERENCES mark_colors (swatch),
+  CONSTRAINT fk_mark_created_by FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL,
+  CONSTRAINT fk_mark_closed_by FOREIGN KEY (closed_by) REFERENCES users (id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE mark_app_vms (
+  mark_id INT UNSIGNED NOT NULL,
+  app_vm_id INT UNSIGNED NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_by INT UNSIGNED NULL,
+  PRIMARY KEY (mark_id, app_vm_id),
+  KEY idx_mark_app_vm (app_vm_id),
+  CONSTRAINT fk_mark_app_mark FOREIGN KEY (mark_id) REFERENCES marks (id) ON DELETE CASCADE,
+  CONSTRAINT fk_mark_app_vm FOREIGN KEY (app_vm_id) REFERENCES app_vms (id) ON DELETE CASCADE,
+  CONSTRAINT fk_mark_app_user FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE mark_db_vms (
+  mark_id INT UNSIGNED NOT NULL,
+  db_vm_id INT UNSIGNED NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_by INT UNSIGNED NULL,
+  PRIMARY KEY (mark_id, db_vm_id),
+  KEY idx_mark_db_vm (db_vm_id),
+  CONSTRAINT fk_mark_db_mark FOREIGN KEY (mark_id) REFERENCES marks (id) ON DELETE CASCADE,
+  CONSTRAINT fk_mark_db_vm FOREIGN KEY (db_vm_id) REFERENCES db_vms (id) ON DELETE CASCADE,
+  CONSTRAINT fk_mark_db_user FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE saved_views (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id INT UNSIGNED NOT NULL,
+  name VARCHAR(120) NOT NULL,
+  vm_side ENUM('app', 'db', 'both') NOT NULL,
+  zone_id INT UNSIGNED NULL,
+  os_id INT UNSIGNED NULL,
+  environment_id INT UNSIGNED NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_saved_views_user_name (user_id, name),
+  KEY idx_saved_views_user (user_id, name),
+  CONSTRAINT fk_saved_view_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+  CONSTRAINT fk_saved_view_zone FOREIGN KEY (zone_id) REFERENCES lookups (id) ON DELETE SET NULL,
+  CONSTRAINT fk_saved_view_os FOREIGN KEY (os_id) REFERENCES lookups (id) ON DELETE SET NULL,
+  CONSTRAINT fk_saved_view_environment FOREIGN KEY (environment_id) REFERENCES lookups (id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO mark_colors (swatch, name, sort_order) VALUES
+  ('amber', 'Amber', 10),
+  ('red', 'Red', 20),
+  ('orange', 'Orange', 30),
+  ('teal', 'Teal', 40),
+  ('blue', 'Blue', 50),
+  ('violet', 'Violet', 60),
+  ('pink', 'Pink', 70),
+  ('slate', 'Slate', 80);
+
 INSERT INTO lookups (kind, name, sort_order) VALUES
   ('client', 'PT', 10),
   ('environment', 'prod', 10),

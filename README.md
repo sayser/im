@@ -114,6 +114,8 @@ Preloaded values:
 
 Decommission moves a VM onto the DECOM tab. It can be restored. Delete is permanent for both Admin and OPs, and the audit log keeps the field values from the deleted record.
 
+A mark groups servers that share a job, such as a PHP upgrade. The server stays on its environment tab and in its stack, and it can belong to more than one mark. Open marks are colored frames on the Marks page, and the same color shows on the inventory card. Admin and OPs create marks, pick the APP VMs, DB VMs, or both, and can delete a mark when the job is done. Admins rename or retire the color swatches under Field options.
+
 The dashboard, search, filters, CSV export, audit log, and per-field history are available to every signed-in user. Export follows the current filters and includes every matching row, not only the visible page.
 
 ## Local smoke test

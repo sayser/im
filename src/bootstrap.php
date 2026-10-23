@@ -9,6 +9,8 @@ require APP_ROOT . '/src/html.php';
 require APP_ROOT . '/src/auth.php';
 require APP_ROOT . '/src/audit.php';
 require APP_ROOT . '/src/inventory.php';
+require APP_ROOT . '/src/marks.php';
+require APP_ROOT . '/src/saved_views.php';
 require APP_ROOT . '/src/router.php';
 
 function boot(): void

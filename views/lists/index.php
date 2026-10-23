@@ -35,4 +35,29 @@
       <?php endif; ?>
     </section>
   <?php endforeach; ?>
+  <section class="card">
+    <h2>Mark colors</h2>
+    <p class="muted">These swatches color a mark. Rename one to describe the work it highlights, or retire it so new marks cannot use it.</p>
+    <ul class="option-list">
+      <?php foreach ($markColors as $row): ?>
+        <?php $class = mark_swatch_class((string)$row['swatch']); ?>
+        <li>
+          <form method="post" action="<?= e(url('/mark-colors')) ?>">
+            <?= csrf_field() ?>
+            <input type="hidden" name="swatch" value="<?= e($row['swatch']) ?>">
+            <span class="swatch-dot <?= e($class) ?>"></span>
+            <input name="name" maxlength="120" required value="<?= e($row['name']) ?>" aria-label="Color name">
+            <span class="muted"><?= (int)$row['used'] ?> in use</span>
+            <?php if ((int)$row['active'] !== 1): ?><span class="badge decom">Retired</span><?php endif; ?>
+            <button class="btn small ghost" name="action" value="rename" type="submit">Rename</button>
+            <?php if ((int)$row['active'] === 1): ?>
+              <button class="btn small ghost" name="action" value="retire" type="submit">Retire</button>
+            <?php else: ?>
+              <button class="btn small ghost" name="action" value="restore" type="submit">Restore</button>
+            <?php endif; ?>
+          </form>
+        </li>
+      <?php endforeach; ?>
+    </ul>
+  </section>
 </div>

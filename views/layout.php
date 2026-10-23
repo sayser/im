@@ -26,6 +26,8 @@
         $nav = [
             ['dashboard', 'Dashboard', '/'],
             ['inventory', 'Inventory', '/environments'],
+            ['views', 'Views', '/views'],
+            ['marks', 'Marks', '/marks'],
             ['decom', 'DECOM', '/decom'],
             ['audit', 'Audit', '/audit'],
         ];
