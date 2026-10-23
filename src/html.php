@@ -71,9 +71,10 @@ function fact_line(string $label, string $value, bool $mono = false, bool $wide 
     return '<div' . ($wide ? ' class="wide"' : '') . '><dt>' . e($label) . '</dt><dd class="' . ($mono ? 'mono' : 'break') . '">' . $body . '</dd></div>';
 }
 
-function fact_row(string $label, string $html, bool $wide = false): string
+function fact_row(string $label, string $html, bool $wide = false, string $class = ''): string
 {
-    return '<div' . ($wide ? ' class="wide"' : '') . '><dt>' . e($label) . '</dt><dd>' . $html . '</dd></div>';
+    $classes = trim(($wide ? 'wide ' : '') . $class);
+    return '<div' . ($classes !== '' ? ' class="' . e($classes) . '"' : '') . '><dt>' . e($label) . '</dt><dd>' . $html . '</dd></div>';
 }
 
 function env_badge(string $name): string
@@ -213,7 +214,7 @@ function url_lines(array $urls, bool $linked): string
     }
     $html = [];
     foreach ($clean as $url) {
-        $html[] = $linked ? full_link($url) : '<span class="break">' . soft_url($url) . '</span>';
+        $html[] = $linked ? full_link($url) : '<span class="url-line">' . e($url) . '</span>';
     }
     return '<span class="url-stack">' . implode('', $html) . '</span>';
 }

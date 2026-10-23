@@ -27,10 +27,12 @@ $href = $side === 'app' ? '/app-vms/' . (int)$vm['id'] : '/db-vms/' . (int)$vm['
         <?= fact_row('DB VMs', linked_names($vm['db_vms'] ?? [])) ?>
       </div>
       <div class="vm-row">
-        <?= fact_row('URL', url_lines($vm['urls'] ?? [], false)) ?>
         <?= fact_row('BrotherHood URL', soft_url($vm['brotherhood_url'] ?? '')) ?>
         <?= fact_row('Status Page', soft_url($vm['status_page_url'] ?? '')) ?>
-        <?= fact_row('Notes', nl2e($vm['notes'] ?? '')) ?>
+        <?= fact_row('Notes', nl2e($vm['notes'] ?? ''), false, 'vm-col-4') ?>
+      </div>
+      <div class="vm-row vm-urls">
+        <?= fact_row('URL', url_lines($vm['urls'] ?? [], false)) ?>
       </div>
     <?php else: ?>
       <?php $redis = (int)$vm['redis'] === 1 ? '<span class="badge yes">Yes</span>' : '<span class="badge no">No</span>'; ?>
@@ -39,7 +41,7 @@ $href = $side === 'app' ? '/app-vms/' . (int)$vm['id'] : '/db-vms/' . (int)$vm['
         <?= fact_row('Redis', $redis) ?>
         <?= fact_row('APP VMs', linked_names($vm['app_vms'] ?? [])) ?>
       </div>
-      <div class="vm-row">
+      <div class="vm-row vm-span">
         <?= fact_row('Notes', nl2e($vm['notes'] ?? '')) ?>
       </div>
     <?php endif; ?>
