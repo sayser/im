@@ -24,7 +24,7 @@
     <?php if (can_write()): ?>
       <div class="page-actions">
         <a class="btn" href="<?= e(url('/app-vms/new?zone=' . (int)$zone['id'])) ?>">Add APP VM</a>
-        <a class="btn ghost" href="<?= e(url('/db-vms/new?zone=' . (int)$zone['id'])) ?>">Add DB VM</a>
+        <a class="btn" href="<?= e(url('/db-vms/new?zone=' . (int)$zone['id'])) ?>">Add DB VM</a>
       </div>
     <?php endif; ?>
   </div>

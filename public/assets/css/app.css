@@ -310,7 +310,8 @@ p { margin: 0 0 12px; }
 .field textarea { min-height: 96px; resize: vertical; }
 .url-row { display: flex; gap: 8px; align-items: center; }
 .url-row input { width: auto; flex: 1; }
-.url-stack { display: flex; flex-direction: column; gap: 4px; }
+.url-stack { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+.url-line { display: block; white-space: nowrap; }
 .field input:focus, .field select:focus, .field textarea:focus, .filters input:focus, .filters select:focus, .inline-add input:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(214, 255, 74, 0.16);
@@ -639,7 +640,12 @@ body.auth {
 .vm-card.db:hover { border-color: rgba(142, 182, 255, 0.55); }
 .vm-card.is-hit { border-color: var(--accent); background: rgba(214, 255, 74, 0.08); }
 .vm-rows { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-.vm-row { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 4px 16px; align-items: baseline; min-width: 0; }
+.vm-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px 16px; align-items: start; min-width: 0; }
+.vm-col-4 { grid-column: 4; }
+.vm-row.vm-span > div { grid-column: 1 / -1; }
+.vm-row.vm-urls { grid-template-columns: minmax(0, 1fr); }
+.vm-row.vm-urls > div,
+.vm-row.vm-urls dd { width: 100%; max-width: 100%; }
 .vm-id { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; min-width: 0; }
 .vm-card h3 { margin: 0; font-size: 1rem; font-weight: 700; letter-spacing: -0.03em; line-height: 1.2; }
 .vm-card .badge, .vm-card .chip, .pill-kind, .os-pill {
