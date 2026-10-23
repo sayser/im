@@ -203,4 +203,35 @@
     input.addEventListener("input", refreshPicks);
   });
   refreshPicks();
+
+  document.querySelectorAll("[data-url-list]").forEach((list) => {
+    const add = list.querySelector("[data-url-add]");
+    add?.addEventListener("click", () => {
+      const rows = list.querySelectorAll(".url-row");
+      const last = rows[rows.length - 1];
+      if (!last) return;
+      const next = last.cloneNode(true);
+      const input = next.querySelector("input");
+      if (input) {
+        input.value = "";
+        input.removeAttribute("value");
+        input.removeAttribute("aria-invalid");
+      }
+      last.after(next);
+      input?.focus();
+    });
+    list.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-url-remove]");
+      if (!button || !list.contains(button)) return;
+      const row = button.closest(".url-row");
+      if (!row) return;
+      const rows = list.querySelectorAll(".url-row");
+      if (rows.length <= 1) {
+        const input = row.querySelector("input");
+        if (input) input.value = "";
+        return;
+      }
+      row.remove();
+    });
+  });
 })();

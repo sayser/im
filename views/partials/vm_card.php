@@ -27,7 +27,7 @@ $href = $side === 'app' ? '/app-vms/' . (int)$vm['id'] : '/db-vms/' . (int)$vm['
         <?= fact_row('DB VMs', linked_names($vm['db_vms'] ?? [])) ?>
       </div>
       <div class="vm-row">
-        <?= fact_row('URL', soft_url($vm['url'] ?? '')) ?>
+        <?= fact_row('URL', url_lines($vm['urls'] ?? [], false)) ?>
         <?= fact_row('BrotherHood URL', soft_url($vm['brotherhood_url'] ?? '')) ?>
         <?= fact_row('Status Page', soft_url($vm['status_page_url'] ?? '')) ?>
         <?= fact_row('Notes', nl2e($vm['notes'] ?? '')) ?>

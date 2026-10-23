@@ -398,7 +398,7 @@ function page_export_app(): void
             $row['os_name'],
             $row['internal_ip'],
             (string)($row['external_ip'] ?? ''),
-            (string)($row['url'] ?? ''),
+            joined_urls($row['urls'] ?? []),
             (string)($row['brotherhood_url'] ?? ''),
             (string)($row['status_page_url'] ?? ''),
             joined_names($row['applications']),

@@ -1,0 +1,532 @@
+PT Inventory Manager deployment guide
+=====================================
+
+Two machines:
+
+    Proxy server     nginx only. Browsers connect here with HTTPS.
+    App server       nginx, the PHP application, and MySQL on this same host.
+
+Traffic path:
+
+    Browser  -- port 80 or 443 -->  proxy nginx
+    Proxy    -- port 443       -->  app server nginx
+    App nginx -- port 8080     -->  the PHP application on 127.0.0.1
+    PHP      -- port 3306      -->  MySQL on 127.0.0.1
+
+The proxy listens on ports 80 and 443. Port 80 redirects to HTTPS. The proxy
+forwards HTTPS to the app server on port 443. The app server nginx accepts
+that connection and forwards it to the application on port 8080. Port 8080
+listens on 127.0.0.1 only. MySQL also stays on 127.0.0.1. Browsers never
+connect to the app server or to MySQL.
+
+Steps 1 through 8, 10, 11, and 12 are done on the app server.
+Step 9 is done on the proxy server.
+Step 13 is done from a browser.
+
+The app still uses secure cookies. It does not read X-Forwarded-For itself.
+The nginx on port 443 trusts that header only from the proxy. It then passes
+the client address to port 8080. The nginx on port 8080 trusts that header
+only from 127.0.0.1, and that is the address PHP records.
+
+Do not use the PHP built-in server on this host. Use nginx and php-fpm.
+
+
+Values to fill in before you start
+-----------------------------------
+
+Write these down and use the same values in every step.
+
+PUBLIC_HOSTNAME     The name browsers use, such as inventory.example.com
+APP_SERVER_IP       Private IP of this app server
+PROXY_SERVER_IP     Private IP of the nginx proxy
+DB_PASSWORD         Password for the pt_inventory database account
+INSTALL_DIR         /var/www/pt-inventory
+
+DB_PASSWORD must not contain a single quote or a backslash.
+
+Point DNS for PUBLIC_HOSTNAME at the proxy server, not at the app server.
+
+
+1. Confirm PHP 8.3 and MySQL 8.0
+--------------------------------
+
+On the app server:
+
+    php -v
+    php -m
+    mysql --version
+
+php -v must report PHP 8.3. php -m must list pdo_mysql and mbstring.
+mysql --version must report MySQL 8.0.
+
+If the php command is not 8.3, use the full path of the PHP 8.3 binary that
+belongs to the installed php-fpm pool. Every php command below must use that
+same binary.
+
+Find the php-fpm service name:
+
+    systemctl list-units --type=service | grep -i php
+
+Remember that name. This guide calls it PHP_FPM_SERVICE.
+
+
+2. Put the application files in place
+--------------------------------------
+
+On the app server, as root:
+
+    mkdir -p /var/www
+    cd /var/www
+    git clone https://github.com/sayser/im.git pt-inventory
+    cd /var/www/pt-inventory
+    git checkout master
+
+If git is not available, copy the repository onto the server so the files
+land in /var/www/pt-inventory. The public directory, src directory,
+sql/schema.sql, and config/config.example.php must all be present.
+
+Do not copy a config/config.php from another machine. The next steps create
+a new one on this server.
+
+Confirm the layout:
+
+    ls /var/www/pt-inventory/public/index.php
+    ls /var/www/pt-inventory/sql/schema.sql
+    ls /var/www/pt-inventory/config/config.example.php
+
+
+3. Create the database
+----------------------
+
+MySQL must listen on 127.0.0.1 only. In /etc/my.cnf or a file under
+/etc/my.cnf.d/, set:
+
+    bind-address = 127.0.0.1
+
+Start MySQL:
+
+    systemctl enable --now mysqld
+
+Sign in as the MySQL administrator. Use whichever of these works on this host:
+
+    mysql -u root -p
+
+or:
+
+    sudo mysql
+
+Run this SQL. Replace DB_PASSWORD with the password you wrote down.
+
+    CREATE DATABASE pt_inventory CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+    CREATE USER 'pt_inventory'@'127.0.0.1' IDENTIFIED BY 'DB_PASSWORD';
+
+    GRANT SELECT, INSERT, UPDATE, DELETE ON pt_inventory.* TO 'pt_inventory'@'127.0.0.1';
+
+    FLUSH PRIVILEGES;
+
+The account is pt_inventory@127.0.0.1 because the application connects to
+127.0.0.1. An account named pt_inventory@localhost will not be used.
+
+Leave the mysql prompt:
+
+    EXIT;
+
+
+4. Import the schema
+--------------------
+
+Still on the app server, from a shell, not from inside the mysql prompt:
+
+    mysql -u root -p pt_inventory < /var/www/pt-inventory/sql/schema.sql
+
+Use sudo mysql if that is how this host signs in as administrator:
+
+    sudo mysql pt_inventory < /var/www/pt-inventory/sql/schema.sql
+
+Run this import once. Running it again fails because the tables already exist.
+
+Sign in again and check the tables:
+
+    mysql -u root -p
+
+Then run:
+
+    USE pt_inventory;
+
+    SHOW TABLES;
+
+    SELECT kind, name FROM lookups ORDER BY kind, sort_order, name;
+
+    SELECT swatch, name FROM mark_colors ORDER BY sort_order;
+
+    EXIT;
+
+SHOW TABLES must list all of these:
+
+    users
+    lookups
+    stacks
+    app_vms
+    db_vms
+    app_vm_applications
+    app_db_links
+    audit_events
+    field_history
+    mark_colors
+    marks
+    mark_app_vms
+    mark_db_vms
+    saved_views
+
+lookups must already contain Z0, Z2, Azure, AWS, PT, prod, test, staging,
+Moodle, Drupal, LMSX, RHEL8, RHEL9, Rocky9, and Windows.
+mark_colors must contain eight rows.
+
+
+5. Create config.php
+--------------------
+
+On the app server:
+
+    cp /var/www/pt-inventory/config/config.example.php /var/www/pt-inventory/config/config.php
+
+Edit /var/www/pt-inventory/config/config.php. Set these values and leave the
+rest as they are:
+
+    host                   127.0.0.1
+    port                   3306
+    name                   pt_inventory
+    user                   pt_inventory
+    pass                   the same DB_PASSWORD used in the CREATE USER statement
+    base_path              empty
+    session_idle_seconds   900
+    session_absolute_seconds  43200
+    display_timezone       America/New_York
+    cookie_secure          true
+    debug                  false
+
+cookie_secure must stay true. debug must stay false. If debug is false and
+cookie_secure is false, the site refuses to start.
+
+The pass value is PHP text. If you followed the password rule in the first
+section, single quotes inside the password are not a problem. Keep the quotes
+that already wrap the value in the file.
+
+
+6. Configure the PHP 8.3 pool
+-----------------------------
+
+Find the pool file and the socket it listens on. Search the usual locations:
+
+    grep -R "^listen" /etc/php-fpm.d/ /etc/opt/remi/php83/php-fpm.d/ 2>/dev/null
+
+Write down the listen path. This guide calls it PHP_FPM_SOCKET.
+It looks like /run/php-fpm/www.sock or a path under /var/opt/remi/php83/.
+
+In that same pool file, or in the PHP 8.3 php.ini used by that pool, set:
+
+    expose_php = Off
+    display_errors = Off
+    log_errors = On
+    allow_url_include = Off
+    cgi.fix_pathinfo = 0
+
+Also note the pool user and group lines. The next step uses that group so
+php-fpm can read config.php. This guide calls that group PHP_GROUP.
+
+
+7. File permissions
+-------------------
+
+Replace PHP_GROUP with the group from the pool file.
+
+    chown -R root:PHP_GROUP /var/www/pt-inventory
+    find /var/www/pt-inventory -type d -exec chmod 755 {} \;
+    find /var/www/pt-inventory -type f -exec chmod 644 {} \;
+    chmod 640 /var/www/pt-inventory/config/config.php
+
+config.php must not be readable by other users. nginx serves only the public
+directory, so config.php is not a web page. php-fpm still has to read it.
+
+
+8. App server nginx
+-------------------
+
+Create /etc/nginx/conf.d/pt-inventory.conf on the app server.
+Replace APP_SERVER_IP, PROXY_SERVER_IP, PHP_FPM_SOCKET, and the certificate
+paths. Use the certificate issued for this app server.
+
+This file has two server blocks. The first accepts the proxy on port 443 and
+forwards to port 8080. The second is the application and listens only on
+127.0.0.1 port 8080.
+
+    server {
+        listen APP_SERVER_IP:443 ssl;
+        http2 on;
+        server_name PUBLIC_HOSTNAME;
+        server_tokens off;
+        client_max_body_size 2m;
+
+        ssl_protocols TLSv1.2 TLSv1.3;
+        ssl_certificate /etc/pki/tls/certs/inventory.crt;
+        ssl_certificate_key /etc/pki/tls/private/inventory.key;
+
+        set_real_ip_from PROXY_SERVER_IP;
+        real_ip_header X-Forwarded-For;
+        real_ip_recursive on;
+
+        location / {
+            proxy_pass http://127.0.0.1:8080;
+            proxy_http_version 1.1;
+            proxy_set_header Host $host;
+            proxy_set_header X-Forwarded-For $remote_addr;
+            proxy_set_header X-Forwarded-Proto https;
+            proxy_set_header Connection "";
+        }
+    }
+
+    server {
+        listen 127.0.0.1:8080;
+        server_name PUBLIC_HOSTNAME;
+        root /var/www/pt-inventory/public;
+        server_tokens off;
+        client_max_body_size 2m;
+
+        set_real_ip_from 127.0.0.1;
+        real_ip_header X-Forwarded-For;
+        real_ip_recursive on;
+
+        add_header X-Content-Type-Options nosniff always;
+        add_header X-Frame-Options DENY always;
+        add_header Referrer-Policy same-origin always;
+
+        location / {
+            try_files $uri /index.php?$query_string;
+        }
+
+        location = /index.php {
+            include fastcgi_params;
+            fastcgi_param SCRIPT_FILENAME $document_root/index.php;
+            fastcgi_pass unix:PHP_FPM_SOCKET;
+        }
+
+        location ~ \.php$ {
+            return 404;
+        }
+
+        location ~ /\. {
+            deny all;
+        }
+    }
+
+Port 443 listens on APP_SERVER_IP, not on 0.0.0.0. Port 8080 listens on
+127.0.0.1 only. Do not add an HTTP-to-HTTPS redirect on the app server.
+
+If SELinux on the app server is Enforcing, the port 443 nginx must be allowed
+to connect to 127.0.0.1:8080:
+
+    setsebool -P httpd_can_network_connect 1
+
+Test and reload:
+
+    nginx -t
+    systemctl enable --now nginx
+    systemctl reload nginx
+
+
+9. Proxy nginx
+--------------
+
+Create a site file on the proxy, for example
+/etc/nginx/conf.d/pt-inventory-proxy.conf.
+Replace PUBLIC_HOSTNAME, APP_SERVER_IP, and the certificate paths.
+Use the host's approved certificate and cipher policy.
+
+    server {
+        listen 443 ssl;
+        http2 on;
+        server_name PUBLIC_HOSTNAME;
+        server_tokens off;
+        client_max_body_size 2m;
+
+        ssl_protocols TLSv1.2 TLSv1.3;
+        ssl_certificate /etc/pki/tls/certs/inventory.crt;
+        ssl_certificate_key /etc/pki/tls/private/inventory.key;
+
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+        location / {
+            proxy_pass https://APP_SERVER_IP:443;
+            proxy_ssl_server_name on;
+            proxy_ssl_name PUBLIC_HOSTNAME;
+            proxy_ssl_verify off;
+            proxy_http_version 1.1;
+            proxy_set_header Host $host;
+            proxy_set_header X-Forwarded-For $remote_addr;
+            proxy_set_header X-Forwarded-Proto https;
+            proxy_set_header Connection "";
+        }
+    }
+
+    server {
+        listen 80;
+        server_name PUBLIC_HOSTNAME;
+        return 301 https://PUBLIC_HOSTNAME$request_uri;
+    }
+
+X-Forwarded-For is set to $remote_addr, which is the address the proxy
+actually accepted. Do not append the client-supplied header. The app server
+trusts this header only from PROXY_SERVER_IP.
+
+proxy_ssl_verify is off so the proxy can connect while the app server uses
+its own certificate. When that certificate is trusted by the proxy, remove
+the proxy_ssl_verify line.
+
+The proxy must be allowed to accept public traffic on ports 80 and 443.
+Open those ports on the proxy firewall if they are not already open.
+
+If SELinux on the proxy is Enforcing, nginx must be allowed to connect to
+the app server:
+
+    setsebool -P httpd_can_network_connect 1
+
+Test and reload on the proxy:
+
+    nginx -t
+    systemctl reload nginx
+
+From the proxy, confirm it can reach the app before using a browser:
+
+    curl -k -s -o /dev/null -D - -H "Host: PUBLIC_HOSTNAME" https://APP_SERVER_IP/login
+
+The status line is 200. If this fails, fix the app server before testing
+https://PUBLIC_HOSTNAME/.
+
+
+10. Firewall on the app server
+------------------------------
+
+MySQL is on this same host and is already bound to 127.0.0.1, so no firewall
+opening is required for it. Port 8080 is also bound to 127.0.0.1, so it needs
+no firewall opening. Allow port 443 only from the proxy.
+
+    firewall-cmd --permanent --add-rich-rule='rule family="ipv4" source address="PROXY_SERVER_IP" port port="443" protocol="tcp" accept'
+    firewall-cmd --reload
+    firewall-cmd --list-all
+
+Do not open port 3306. Do not open port 8080. Do not open port 443 to everyone.
+
+If firewalld is not used, apply the same rule in the host firewall.
+
+
+11. SELinux
+-----------
+
+If getenforce prints Enforcing, restore the file labels:
+
+    restorecon -Rv /var/www/pt-inventory
+
+A 502 from the proxy, with a denial in /var/log/audit/audit.log, means nginx
+cannot reach the php-fpm socket or read the site. Fix that denial before
+opening the site to users. Do not turn SELinux off.
+
+
+12. Start php-fpm
+-----------------
+
+Replace PHP_FPM_SERVICE with the name from step 1.
+
+    systemctl enable --now PHP_FPM_SERVICE
+    systemctl restart PHP_FPM_SERVICE
+
+Confirm the socket from step 6 exists:
+
+    ls -l PHP_FPM_SOCKET
+
+
+13. Create the first admin
+--------------------------
+
+Open this address from a browser. Use the public name, not the private IP:
+
+    https://PUBLIC_HOSTNAME/
+
+The first page asks for the initial admin username, display name, and password.
+There is no default password.
+
+Username: 3 to 64 characters, letters, numbers, dot, underscore, or hyphen.
+Password: 12 to 72 characters, with at least one letter and one number.
+
+Create that account once. After it exists, https://PUBLIC_HOSTNAME/setup
+returns Not found.
+
+Sign in. Add any extra clients under Field options. Environments, deployments,
+applications, and operating systems are already loaded.
+
+
+14. Checks
+----------
+
+Run these from a machine that can reach the proxy.
+
+The setup page is gone:
+
+    curl -k -s -o /dev/null -D - https://PUBLIC_HOSTNAME/setup
+
+The status line is HTTP/1.1 404 or HTTP/2 404.
+
+A signed-out inventory page redirects to login:
+
+    curl -k -s -o /dev/null -D - https://PUBLIC_HOSTNAME/marks
+
+The status line is 303 and the Location header ends in /login.
+
+The login page loads:
+
+    curl -k -s -o /dev/null -D - https://PUBLIC_HOSTNAME/login
+
+The status line is 200.
+
+config.php is not on the web:
+
+    curl -k -s -o /dev/null -D - https://PUBLIC_HOSTNAME/../config/config.php
+
+The status line is 404, or the body is the login page. It must not show the
+database password.
+
+From the app server, the app user can read and nothing more. Sign in to MySQL
+as root and run:
+
+    SHOW GRANTS FOR 'pt_inventory'@'127.0.0.1';
+
+The grant list is SELECT, INSERT, UPDATE, and DELETE on pt_inventory only.
+There is no FILE, SUPER, CREATE, DROP, ALTER, or INDEX privilege.
+
+
+15. After it is in use
+----------------------
+
+Backups are a database dump plus a copy of config.php. Dump as an
+administrator, not as pt_inventory:
+
+    mysqldump -u root -p --single-transaction --routines=false pt_inventory > pt_inventory.sql
+
+Keep that file and config.php where the database password is already allowed
+to be stored. Do not commit config.php to git.
+
+To put a new version of the application on this server:
+
+    cd /var/www/pt-inventory
+    git pull
+
+Leave config/config.php in place. It is not in git.
+If a new version adds tables, the release notes will include the SQL. Do not
+import sql/schema.sql again over a database that already has data.
+
+
+What this install does not include
+-----------------------------------
+
+A server that runs both an application and a database is still entered as two
+records. That is a later change. It does not block this install.

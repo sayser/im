@@ -48,7 +48,7 @@ function schema_ready(): bool
         return false;
     }
     $have = array_map(static fn($table): string => strtolower((string)$table), $have);
-    foreach (['users', 'lookups', 'stacks', 'app_vms', 'db_vms', 'app_vm_applications', 'app_db_links', 'audit_events', 'field_history', 'mark_colors', 'marks', 'mark_app_vms', 'mark_db_vms', 'saved_views'] as $table) {
+    foreach (['users', 'lookups', 'stacks', 'app_vms', 'db_vms', 'app_vm_urls', 'app_vm_applications', 'app_db_links', 'audit_events', 'field_history', 'mark_colors', 'marks', 'mark_app_vms', 'mark_db_vms', 'saved_views'] as $table) {
         if (!in_array($table, $have, true)) {
             return false;
         }

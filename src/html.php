@@ -199,6 +199,25 @@ function soft_url(mixed $url): string
     return str_replace(['/', '?', '&'], ['/<wbr>', '?<wbr>', '&<wbr>'], e($url));
 }
 
+function url_lines(array $urls, bool $linked): string
+{
+    $clean = [];
+    foreach ($urls as $url) {
+        $url = trim((string)$url);
+        if ($url !== '') {
+            $clean[] = $url;
+        }
+    }
+    if (!$clean) {
+        return '<span class="muted">—</span>';
+    }
+    $html = [];
+    foreach ($clean as $url) {
+        $html[] = $linked ? full_link($url) : '<span class="break">' . soft_url($url) . '</span>';
+    }
+    return '<span class="url-stack">' . implode('', $html) . '</span>';
+}
+
 function full_link(mixed $url): string
 {
     $url = trim((string)$url);

@@ -125,6 +125,16 @@ CREATE TABLE db_vms (
   CONSTRAINT chk_db_redis CHECK (redis IN (0, 1))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE app_vm_urls (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  app_vm_id INT UNSIGNED NOT NULL,
+  url VARCHAR(500) NOT NULL,
+  sort_order INT NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  KEY idx_app_vm_urls_vm (app_vm_id, sort_order),
+  CONSTRAINT fk_app_vm_urls_vm FOREIGN KEY (app_vm_id) REFERENCES app_vms (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE app_vm_applications (
   app_vm_id INT UNSIGNED NOT NULL,
   application_id INT UNSIGNED NOT NULL,
