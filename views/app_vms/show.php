@@ -40,7 +40,7 @@
       <div><dt>OS</dt><dd><?= e($vm['os_name']) ?></dd></div>
       <div><dt>Internal IP</dt><dd class="mono"><?= e($vm['internal_ip']) ?></dd></div>
       <div><dt>External IP</dt><dd class="mono"><?= or_dash($vm['external_ip'] ?? '') ?></dd></div>
-      <div><dt>URL</dt><dd><?= full_link($vm['url'] ?? '') ?></dd></div>
+      <div><dt>URLs</dt><dd><?= url_lines($vm['urls'] ?? [], true) ?></dd></div>
       <div><dt>BrotherHood URL</dt><dd><?= full_link($vm['brotherhood_url'] ?? '') ?></dd></div>
       <div><dt>Status Page</dt><dd><?= full_link($vm['status_page_url'] ?? '') ?></dd></div>
       <div><dt>Applications</dt><dd><?= chips($vm['applications']) ?></dd></div>

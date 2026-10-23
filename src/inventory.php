@@ -176,6 +176,7 @@ function app_where(array $filters, string $lifecycle): array
             $params,
             ['v.name', 'v.url', 'v.brotherhood_url', 'v.status_page_url', 'v.notes', 'v.troubleshooting', 'c.name', 'e.name', 'o.name', 'z.name', 's.name'],
             [
+                ['sql' => 'EXISTS (SELECT 1 FROM app_vm_urls au WHERE au.app_vm_id = v.id AND ' . like_sql('au.url') . ')', 'binds' => 1],
                 ['sql' => 'EXISTS (SELECT 1 FROM app_vm_applications aa JOIN lookups al ON al.id = aa.application_id WHERE aa.app_vm_id = v.id AND ' . like_sql('al.name') . ')', 'binds' => 1],
                 ['sql' => 'EXISTS (SELECT 1 FROM app_db_links l JOIN db_vms d ON d.id = l.db_vm_id WHERE l.app_vm_id = v.id AND (' . like_sql('d.name') . ' OR ' . like_sql('d.internal_ip') . '))', 'binds' => 2],
             ],
@@ -227,6 +228,14 @@ function hydrate_app_rows(array $rows): array
     }
     $ids = array_map(static fn(array $row): int => (int)$row['id'], $rows);
     $marks = placeholders($ids);
+    $urlRows = db_all(
+        'SELECT app_vm_id, url FROM app_vm_urls WHERE app_vm_id IN (' . $marks . ') ORDER BY sort_order, id',
+        $ids
+    );
+    $urls = [];
+    foreach ($urlRows as $urlRow) {
+        $urls[(int)$urlRow['app_vm_id']][] = (string)$urlRow['url'];
+    }
     $apps = children_by_owner(
         $ids,
         'SELECT aa.app_vm_id AS owner_id, l.id, l.name
@@ -249,6 +258,12 @@ function hydrate_app_rows(array $rows): array
     foreach ($rows as $i => $row) {
         $id = (int)$row['id'];
         $rows[$i]['id'] = $id;
+        $stored = $urls[$id] ?? [];
+        if (!$stored && trim((string)($row['url'] ?? '')) !== '') {
+            $stored = [(string)$row['url']];
+        }
+        $rows[$i]['urls'] = $stored;
+        $rows[$i]['url'] = $stored[0] ?? '';
         $rows[$i]['applications'] = $apps[$id] ?? [];
         $rows[$i]['db_vms'] = $dbs[$id] ?? [];
     }
@@ -375,7 +390,7 @@ function app_snapshot(array $vm): array
         'OS' => (string)$vm['os_name'],
         'Internal IP' => (string)$vm['internal_ip'],
         'External IP' => (string)($vm['external_ip'] ?? ''),
-        'URL' => (string)($vm['url'] ?? ''),
+        'URL' => joined_urls($vm['urls'] ?? []),
         'BrotherHood URL' => (string)($vm['brotherhood_url'] ?? ''),
         'Status Page' => (string)($vm['status_page_url'] ?? ''),
         'Applications' => joined_names($vm['applications'] ?? []),
@@ -396,7 +411,7 @@ function app_snapshot_input(array $in): array
         'OS' => lookup_display((int)$in['os_id']),
         'Internal IP' => (string)$in['internal_ip'],
         'External IP' => (string)$in['external_ip'],
-        'URL' => (string)$in['url'],
+        'URL' => joined_urls($in['urls'] ?? []),
         'BrotherHood URL' => (string)$in['brotherhood_url'],
         'Status Page' => (string)$in['status_page_url'],
         'Applications' => lookup_names_sorted($in['application_ids']),
@@ -646,6 +661,7 @@ function app_input_blank(): array
         'internal_ip' => '',
         'external_ip' => '',
         'url' => '',
+        'urls' => [],
         'brotherhood_url' => '',
         'status_page_url' => '',
         'notes' => '',
@@ -667,6 +683,7 @@ function app_input_from_vm(array $vm): array
         'internal_ip' => (string)$vm['internal_ip'],
         'external_ip' => (string)($vm['external_ip'] ?? ''),
         'url' => (string)($vm['url'] ?? ''),
+        'urls' => array_values($vm['urls'] ?? []),
         'brotherhood_url' => (string)($vm['brotherhood_url'] ?? ''),
         'status_page_url' => (string)($vm['status_page_url'] ?? ''),
         'notes' => (string)($vm['notes'] ?? ''),
@@ -687,7 +704,8 @@ function normalize_app_post(): array
         'os_id' => (int)($_POST['os_id'] ?? 0),
         'internal_ip' => clean_line((string)($_POST['internal_ip'] ?? '')),
         'external_ip' => clean_line((string)($_POST['external_ip'] ?? '')),
-        'url' => clean_line((string)($_POST['url'] ?? '')),
+        'urls' => posted_urls(),
+        'url' => '',
         'brotherhood_url' => clean_line((string)($_POST['brotherhood_url'] ?? '')),
         'status_page_url' => clean_line((string)($_POST['status_page_url'] ?? '')),
         'notes' => clean_multiline((string)($_POST['notes'] ?? '')),
@@ -732,8 +750,15 @@ function validate_app(array $in, ?array $existing): array
     if ($message = invalid_ip((string)$in['external_ip'], false)) {
         $errors['external_ip'] = $message;
     }
-    if ($message = invalid_url((string)$in['url'])) {
-        $errors['url'] = $message;
+    if (count($in['urls']) > 20) {
+        $errors['urls'] = 'Use 20 URLs or fewer.';
+    } else {
+        foreach ($in['urls'] as $url) {
+            if ($message = invalid_url((string)$url)) {
+                $errors['urls'] = $message;
+                break;
+            }
+        }
     }
     if ($message = invalid_url((string)$in['brotherhood_url'])) {
         $errors['brotherhood_url'] = $message;
@@ -858,6 +883,48 @@ function validate_db(array $in, ?array $existing): array
     return $errors;
 }
 
+function posted_urls(): array
+{
+    $raw = $_POST['urls'] ?? [];
+    if (!is_array($raw)) {
+        $raw = [$raw];
+    }
+    $urls = [];
+    $seen = [];
+    foreach ($raw as $value) {
+        $url = clean_line((string)$value);
+        if ($url === '' || isset($seen[$url])) {
+            continue;
+        }
+        $seen[$url] = true;
+        $urls[] = $url;
+    }
+    return $urls;
+}
+
+function joined_urls(array $urls): string
+{
+    $clean = [];
+    foreach ($urls as $url) {
+        $url = trim((string)$url);
+        if ($url !== '') {
+            $clean[] = $url;
+        }
+    }
+    return implode(' | ', $clean);
+}
+
+function replace_app_urls(int $appId, array $urls): void
+{
+    db_exec('DELETE FROM app_vm_urls WHERE app_vm_id = ?', [$appId]);
+    foreach (array_values($urls) as $index => $url) {
+        db_exec(
+            'INSERT INTO app_vm_urls (app_vm_id, url, sort_order) VALUES (?,?,?)',
+            [$appId, $url, $index]
+        );
+    }
+}
+
 function replace_app_applications(int $appId, array $ids): void
 {
     db_exec('DELETE FROM app_vm_applications WHERE app_vm_id = ?', [$appId]);
@@ -896,6 +963,7 @@ function save_app_vm(?int $id, array $in): array
             return ['id' => $id, 'changed' => false];
         }
     }
+    $in['url'] = (string)($in['urls'][0] ?? '');
     $after = app_snapshot_input($in);
     $savedId = db_tx(function () use ($id, $in, $actor, $existing, $after): int {
         $before = [];
@@ -929,6 +997,7 @@ function save_app_vm(?int $id, array $in): array
             $summary = 'Updated APP VM ' . $in['name'];
             $historyAction = 'update';
         }
+        replace_app_urls((int)$id, $in['urls']);
         replace_app_applications((int)$id, $in['application_ids']);
         replace_links_for_app((int)$id, $in['db_vm_ids']);
         $changes = snapshot_changes($before, $after, $creating);

@@ -10,7 +10,7 @@
         <th>External IP</th>
         <th>Applications</th>
         <th>DB VMs</th>
-        <th>URL</th>
+        <th>URLs</th>
         <?php if (!empty($restore)): ?><th></th><?php endif; ?>
       </tr>
     </thead>
@@ -25,7 +25,7 @@
           <td class="mono"><?= or_dash($row['external_ip'] ?? '') ?></td>
           <td><?= chips($row['applications']) ?></td>
           <td><?= vm_links($row['db_vms'], 'db') ?></td>
-          <td><?= host_link($row['url'] ?? '') ?></td>
+          <td><?= url_lines($row['urls'] ?? [], true) ?></td>
           <?php if (!empty($restore) && can_write()): ?>
             <td>
               <form method="post" action="<?= e(url('/app-vms/' . (int)$row['id'] . '/restore')) ?>">

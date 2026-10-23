@@ -67,11 +67,18 @@ $action = $mode === 'edit' ? url('/app-vms/' . (int)$vm['id']) : url('/app-vms')
       <input name="external_ip" maxlength="45" spellcheck="false" value="<?= e($input['external_ip']) ?>"<?= invalid_attr($errors, 'external_ip') ?>>
       <?= field_error($errors, 'external_ip') ?>
     </label>
-    <label class="field">
-      <span>URL</span>
-      <input name="url" type="url" maxlength="500" spellcheck="false" value="<?= e($input['url']) ?>"<?= invalid_attr($errors, 'url') ?>>
-      <?= field_error($errors, 'url') ?>
-    </label>
+    <div class="field span-2" data-url-list>
+      <span>URLs</span>
+      <?php $urlValues = $input['urls'] ?? []; if (!$urlValues) { $urlValues = ['']; } ?>
+      <?php foreach ($urlValues as $oneUrl): ?>
+        <div class="url-row">
+          <input name="urls[]" type="url" maxlength="500" spellcheck="false" value="<?= e($oneUrl) ?>"<?= invalid_attr($errors, 'urls') ?>>
+          <button class="btn small ghost" type="button" data-url-remove>Remove</button>
+        </div>
+      <?php endforeach; ?>
+      <button class="btn small ghost" type="button" data-url-add>Add URL</button>
+      <?= field_error($errors, 'urls') ?>
+    </div>
     <label class="field">
       <span>BrotherHood URL</span>
       <input name="brotherhood_url" type="url" maxlength="500" spellcheck="false" value="<?= e($input['brotherhood_url']) ?>"<?= invalid_attr($errors, 'brotherhood_url') ?>>
