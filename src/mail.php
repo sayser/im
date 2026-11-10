@@ -19,7 +19,6 @@ function mail_settings(): array
         'port' => (int)($mail['port'] ?? 25),
         'from_address' => trim((string)($mail['from_address'] ?? '')),
         'from_name' => trim((string)($mail['from_name'] ?? 'PT Inventory Manager')),
-        'public_base_url' => rtrim(trim((string)($mail['public_base_url'] ?? '')), '/'),
     ];
 }
 
