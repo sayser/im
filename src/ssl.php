@@ -224,18 +224,13 @@ function ssl_subject(string $url, string $expires): string
 function ssl_body(array $row, string $expires, int $leadDays): string
 {
     $left = days_until($expires);
-    $when = $left < 0 ? 'expired ' . abs($left) . ' days ago' : ($left === 0 ? 'expires today' : 'expires in ' . $left . ' days');
+    $dayWord = abs($left) === 1 ? 'day' : 'days';
+    $when = $left < 0 ? 'expired ' . abs($left) . ' ' . $dayWord . ' ago' : ($left === 0 ? 'expires today' : 'expires in ' . $left . ' ' . $dayWord);
     $lead = (int)$row['lead_amount'] . ' ' . ((string)$row['lead_unit'] === 'week' ? 'week' : 'day') . ((int)$row['lead_amount'] === 1 ? '' : 's');
-    $lines = [
+    return implode("\n", [
         'Hello ' . (string)$row['display_name'] . ',',
         '',
         'The certificate for ' . (string)$row['url'] . ' ' . $when . ' (' . format_day($expires) . ').',
         'You asked for a reminder ' . $lead . ' before it expires.',
-    ];
-    $base = mail_settings()['public_base_url'];
-    if ($base !== '') {
-        $lines[] = '';
-        $lines[] = $base . '/ssl/' . (int)$row['cert_id'];
-    }
-    return implode("\n", $lines);
+    ]);
 }
