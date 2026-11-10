@@ -5,7 +5,7 @@
   <?php elseif ((int)$result['count'] === 0): ?>
     No VMs match “<?= e($query) ?>”.
   <?php else: ?>
-    <?= (int)$result['count'] ?> <?= (int)$result['count'] === 1 ? 'match' : 'matches' ?> for “<?= e($query) ?>”. Linked VMs in the same stack stay beside the match.
+    <?= (int)$result['count'] ?> <?= (int)$result['count'] === 1 ? 'match' : 'matches' ?> for “<?= e($query) ?>”. Linked VMs with the same tag stay beside the match.
   <?php endif; ?>
 </p>
 <?php if ($query !== '' && $result['groups']): ?>

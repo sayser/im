@@ -5,7 +5,7 @@ $showZone = !empty($showZone);
 <?php if (!$groups): ?>
   <section class="card empty-board">
     <h2>No VMs on this tab yet</h2>
-    <p class="muted">Add an APP VM and a DB VM with the same stack name and they will sit next to each other.</p>
+    <p class="muted">Add an APP VM and a DB VM with the same tag and they will sit next to each other.</p>
   </section>
 <?php endif; ?>
 <?php foreach ($groups as $group): ?>

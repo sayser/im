@@ -100,7 +100,7 @@ function active_admin_count(): int
 function find_user(int $id): ?array
 {
     $row = db_one(
-        'SELECT id, username, display_name, role, active, must_change_password, created_at, updated_at FROM users WHERE id = ?',
+        'SELECT id, username, display_name, email, role, active, must_change_password, created_at, updated_at FROM users WHERE id = ?',
         [$id]
     );
     if (!$row) {
@@ -115,13 +115,13 @@ function find_user(int $id): ?array
 function users_list(string $q): array
 {
     if ($q === '') {
-        $rows = db_all('SELECT id, username, display_name, role, active, updated_at FROM users ORDER BY username');
+        $rows = db_all('SELECT id, username, display_name, email, role, active, updated_at FROM users ORDER BY username');
     } else {
         $like = like_contains($q);
         $rows = db_all(
-            'SELECT id, username, display_name, role, active, updated_at FROM users WHERE '
-            . like_sql('username') . ' OR ' . like_sql('display_name') . ' ORDER BY username',
-            [$like, $like]
+            'SELECT id, username, display_name, email, role, active, updated_at FROM users WHERE '
+            . like_sql('username') . ' OR ' . like_sql('display_name') . ' OR ' . like_sql('email') . ' ORDER BY username',
+            [$like, $like, $like]
         );
     }
     foreach ($rows as $i => $row) {
@@ -129,6 +129,32 @@ function users_list(string $q): array
         $rows[$i]['active'] = (int)$row['active'];
     }
     return $rows;
+}
+
+function invalid_email(string $email): ?string
+{
+    if ($email === '') {
+        return null;
+    }
+    if (strlen($email) > 254 || preg_match('/[\r\n\x00]/', $email) === 1 || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+        return 'Enter a valid email address.';
+    }
+    return null;
+}
+
+function user_email(int $id): string
+{
+    $email = db_val('SELECT email FROM users WHERE id = ?', [$id]);
+    return is_string($email) ? $email : '';
+}
+
+function user_set_email(int $id, string $email): ?string
+{
+    if ($message = invalid_email($email)) {
+        return $message;
+    }
+    db_exec('UPDATE users SET email = ? WHERE id = ?', [$email === '' ? null : $email, $id]);
+    return null;
 }
 
 function user_password_hash(int $id): ?string
@@ -249,7 +275,7 @@ function login_locked(string $username): bool
         || recent_failures('auth.login_failed', 'ip', client_ip()) >= 30;
 }
 
-function user_create(string $username, string $displayName, string $role, string $password): ?string
+function user_create(string $username, string $displayName, string $role, string $password, string $email = ''): ?string
 {
     if ($message = invalid_username($username)) {
         return $message;
@@ -263,14 +289,17 @@ function user_create(string $username, string $displayName, string $role, string
     if ($message = invalid_password($password)) {
         return $message;
     }
+    if ($message = invalid_email($email)) {
+        return $message;
+    }
     if (db_one('SELECT id FROM users WHERE username = ?', [$username])) {
         return 'That username is already in use.';
     }
     try {
-        db_tx(function () use ($username, $displayName, $role, $password): void {
+        db_tx(function () use ($username, $displayName, $role, $password, $email): void {
             $id = db_insert(
-                'INSERT INTO users (username, display_name, password_hash, role, active, must_change_password) VALUES (?,?,?,?,1,1)',
-                [$username, $displayName, password_make($password), $role]
+                'INSERT INTO users (username, display_name, email, password_hash, role, active, must_change_password) VALUES (?,?,?,?,?,1,1)',
+                [$username, $displayName, $email === '' ? null : $email, password_make($password), $role]
             );
             audit_log('user.create', 'Created user ' . $username . ' (' . role_label($role) . ')', 'user', $id);
         });
@@ -283,7 +312,7 @@ function user_create(string $username, string $displayName, string $role, string
     return null;
 }
 
-function user_update(int $id, string $displayName, string $role, bool $active, string $newPassword): ?string
+function user_update(int $id, string $displayName, string $role, bool $active, string $newPassword, string $email = ''): ?string
 {
     $user = find_user($id);
     if (!$user) {
@@ -308,25 +337,31 @@ function user_update(int $id, string $displayName, string $role, bool $active, s
     if ($reset && ($message = invalid_password($newPassword))) {
         return $message;
     }
+    if ($message = invalid_email($email)) {
+        return $message;
+    }
+    $storedEmail = (string)($user['email'] ?? '');
     $same = $displayName === $user['display_name']
         && $role === $user['role']
         && ($active ? 1 : 0) === $user['active']
+        && $email === $storedEmail
         && !$reset;
     if ($same) {
         return 'unchanged';
     }
     $mustChange = $reset && $actor && (int)$actor['id'] !== $id ? 1 : 0;
     $hash = $reset ? password_make($newPassword) : null;
-    db_tx(function () use ($id, $displayName, $role, $active, $hash, $mustChange, $reset, $user): void {
+    db_tx(function () use ($id, $displayName, $role, $active, $hash, $mustChange, $reset, $user, $email): void {
+        $emailValue = $email === '' ? null : $email;
         if ($hash !== null) {
             db_exec(
-                'UPDATE users SET display_name = ?, role = ?, active = ?, password_hash = ?, must_change_password = ? WHERE id = ?',
-                [$displayName, $role, $active ? 1 : 0, $hash, $mustChange, $id]
+                'UPDATE users SET display_name = ?, email = ?, role = ?, active = ?, password_hash = ?, must_change_password = ? WHERE id = ?',
+                [$displayName, $emailValue, $role, $active ? 1 : 0, $hash, $mustChange, $id]
             );
         } else {
             db_exec(
-                'UPDATE users SET display_name = ?, role = ?, active = ? WHERE id = ?',
-                [$displayName, $role, $active ? 1 : 0, $id]
+                'UPDATE users SET display_name = ?, email = ?, role = ?, active = ? WHERE id = ?',
+                [$displayName, $emailValue, $role, $active ? 1 : 0, $id]
             );
         }
         $summary = 'Updated user ' . $user['username'] . ': ' . role_label($role) . ', ' . ($active ? 'enabled' : 'disabled');

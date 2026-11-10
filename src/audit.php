@@ -34,6 +34,11 @@ function audit_actions(): array
         'mark.delete' => 'Mark deleted',
         'mark.members' => 'Mark members changed',
         'mark_color.update' => 'Mark color updated',
+        'ssl.create' => 'SSL certificate added',
+        'ssl.update' => 'SSL certificate updated',
+        'ssl.delete' => 'SSL certificate deleted',
+        'ssl.subscribe' => 'SSL reminder saved',
+        'ssl.unsubscribe' => 'SSL reminder removed',
     ];
 }
 

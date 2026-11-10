@@ -18,6 +18,11 @@
       <input name="display_name" required maxlength="120" value="<?= e($input['display_name']) ?>">
     </label>
     <label class="field">
+      <span>Email</span>
+      <input name="email" type="email" maxlength="254" value="<?= e($input['email'] ?? '') ?>">
+      <small class="hint">Used for SSL certificate reminders. Leave blank if this person should not get email.</small>
+    </label>
+    <label class="field">
       <span>Role</span>
       <select name="role" required>
         <?php foreach (['admin' => 'Admin', 'ops' => 'OPs', 'view' => 'View-only'] as $value => $label): ?>

@@ -17,19 +17,23 @@ $href = $side === 'app' ? '/app-vms/' . (int)$vm['id'] : '/db-vms/' . (int)$vm['
       </div>
       <?= fact_line('Client', (string)$vm['client_name']) ?>
       <?= fact_line('Environment', (string)$vm['zone_name']) ?>
-      <?= fact_line('Stack', (string)($vm['stack_name'] ?? '')) ?>
+      <?= fact_line('Tag', (string)($vm['stack_name'] ?? '')) ?>
     </div>
     <?php if ($side === 'app'): ?>
       <div class="vm-row">
         <?= fact_line('Internal IP', (string)$vm['internal_ip'], true) ?>
         <?= fact_line('External IP', (string)($vm['external_ip'] ?? ''), true) ?>
-        <?= fact_row('Applications', chips($vm['applications'] ?? [])) ?>
-        <?= fact_row('DB VMs', linked_names($vm['db_vms'] ?? [])) ?>
+        <?= fact_line('Host', (string)($vm['host'] ?? '')) ?>
+        <?= fact_row('CV backup', (int)($vm['cv_backup'] ?? 0) === 1 ? '<span class="badge yes">Yes</span>' : '<span class="badge no">No</span>') ?>
       </div>
       <div class="vm-row">
+        <?= fact_row('Applications', chips($vm['applications'] ?? [])) ?>
+        <?= fact_row('DB VMs', linked_names($vm['db_vms'] ?? [])) ?>
         <?= fact_row('BrotherHood URL', soft_url($vm['brotherhood_url'] ?? '')) ?>
         <?= fact_row('Status Page', soft_url($vm['status_page_url'] ?? '')) ?>
-        <?= fact_row('Notes', nl2e($vm['notes'] ?? ''), false, 'vm-col-4') ?>
+      </div>
+      <div class="vm-row vm-span">
+        <?= fact_row('Notes', nl2e($vm['notes'] ?? '')) ?>
       </div>
       <div class="vm-row vm-urls">
         <?= fact_row('URL', url_lines($vm['urls'] ?? [], false)) ?>
@@ -38,7 +42,11 @@ $href = $side === 'app' ? '/app-vms/' . (int)$vm['id'] : '/db-vms/' . (int)$vm['
       <?php $redis = (int)$vm['redis'] === 1 ? '<span class="badge yes">Yes</span>' : '<span class="badge no">No</span>'; ?>
       <div class="vm-row">
         <?= fact_line('Internal IP', (string)$vm['internal_ip'], true) ?>
+        <?= fact_line('Host', (string)($vm['host'] ?? '')) ?>
         <?= fact_row('Redis', $redis) ?>
+        <?= fact_row('CV backup', (int)($vm['cv_backup'] ?? 0) === 1 ? '<span class="badge yes">Yes</span>' : '<span class="badge no">No</span>') ?>
+      </div>
+      <div class="vm-row">
         <?= fact_row('APP VMs', linked_names($vm['app_vms'] ?? [])) ?>
       </div>
       <div class="vm-row vm-span">

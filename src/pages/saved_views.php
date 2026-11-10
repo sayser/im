@@ -139,3 +139,30 @@ function page_saved_view_update(array $params = []): void
     }
     redirect('/views/' . (int)$saved['id']);
 }
+
+function page_saved_view_pdf(array $params = []): void
+{
+    $user = require_login();
+    $saved = saved_view_find((int)$params['id'], (int)$user['id']);
+    if (!$saved) {
+        abort(404);
+    }
+    $matches = saved_view_matches($saved);
+    $sections = [];
+    if ($matches['apps']) {
+        $table = pdf_app_table($matches['apps'], true, true);
+        $table['label'] = '';
+        $sections[] = ['heading' => 'APP VMs', 'tables' => [$table]];
+    }
+    if ($matches['dbs']) {
+        $table = pdf_db_table($matches['dbs'], true, true);
+        $table['label'] = '';
+        $sections[] = ['heading' => 'DB VMs', 'tables' => [$table]];
+    }
+    $bytes = pdf_document(
+        (string)$saved['name'],
+        saved_view_summary($saved) . ' · ' . format_when(gmdate('Y-m-d H:i:s')),
+        $sections
+    );
+    send_pdf(pdf_filename((string)$saved['name']), $bytes);
+}

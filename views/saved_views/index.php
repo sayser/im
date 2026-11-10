@@ -1,5 +1,5 @@
 <div class="page-bar">
-  <p class="lede">A view is a saved filter. Servers that match are listed here, including ones added later.</p>
+  <p class="lede">A view is your own saved filter. Only you can see, change, or delete it.</p>
   <div class="page-actions">
     <a class="btn" href="<?= e(url('/views/new')) ?>">New view</a>
   </div>

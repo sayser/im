@@ -56,7 +56,7 @@ function nl2e(mixed $value): string
 function host_link(mixed $url): string
 {
     $url = trim((string)$url);
-    if ($url === '' || invalid_url($url) !== null) {
+    if ($url === '' || !http_url($url)) {
         return $url === '' ? '<span class="muted">—</span>' : e($url);
     }
     $host = parse_url($url, PHP_URL_HOST);
@@ -122,10 +122,12 @@ function icon(string $name): string
         'decom' => '<path d="M4 7h16M9 7V5h6v2M7 7l1 13h8l1-13"/>',
         'marks' => '<path d="M20 13.5 13.5 20a2 2 0 0 1-2.8 0L4 13.3V4h9.3L20 10.7a2 2 0 0 1 0 2.8z"/><path d="M7.5 7.5h.01"/>',
         'views' => '<rect x="3" y="4" width="7" height="16" rx="1.5"/><rect x="14" y="4" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="6" rx="1.5"/>',
+        'ssl' => '<rect x="5" y="11" width="14" height="9" rx="1.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
         'audit' => '<path d="M8 4h7l4 4v12a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><path d="M15 4v4h4M9 13h6M9 17h4"/>',
         'users' => '<path d="M16 19v-1.2A3.8 3.8 0 0 0 12.2 14H7.8A3.8 3.8 0 0 0 4 17.8V19"/><circle cx="10" cy="8" r="3"/><path d="M20 19v-1.1A3.2 3.2 0 0 0 17.4 15"/><path d="M16 5.2a2.6 2.6 0 0 1 0 5"/>',
         'lists' => '<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/>',
         'key' => '<circle cx="8" cy="14" r="3.2"/><path d="M11 14h9l-2 2 2 2"/>',
+        'account' => '<circle cx="12" cy="8" r="3"/><path d="M5 19v-1.2A4.8 4.8 0 0 1 9.8 13h4.4A4.8 4.8 0 0 1 19 17.8V19"/>',
         'logout' => '<path d="M10 7V5H5v14h5v-2"/><path d="M10 12h9M16 8l4 4-4 4"/>',
         'menu' => '<path d="M4 7h16M4 12h16M4 17h16"/>',
     ];
@@ -222,7 +224,7 @@ function url_lines(array $urls, bool $linked): string
 function full_link(mixed $url): string
 {
     $url = trim((string)$url);
-    if ($url === '' || invalid_url($url) !== null) {
+    if ($url === '' || !http_url($url)) {
         return $url === '' ? '<span class="muted">—</span>' : e($url);
     }
     return '<a class="break" href="' . e($url) . '" target="_blank" rel="noopener noreferrer">' . e($url) . '</a>';

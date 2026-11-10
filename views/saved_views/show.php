@@ -6,6 +6,7 @@
       <h2><?= e($saved['name']) ?></h2>
       <p class="muted"><?= e($summary) ?></p>
     </div>
+    <a class="btn ghost" href="<?= e(url('/views/' . (int)$saved['id'] . '/pdf')) ?>">Export PDF</a>
   </div>
   <?php
     $membersApps = $apps;

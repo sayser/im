@@ -8,6 +8,7 @@ require APP_ROOT . '/src/pages/admin.php';
 require APP_ROOT . '/src/pages/audit.php';
 require APP_ROOT . '/src/pages/marks.php';
 require APP_ROOT . '/src/pages/saved_views.php';
+require APP_ROOT . '/src/pages/ssl.php';
 
 function match_route(string $pattern, string $path): ?array
 {
@@ -78,10 +79,12 @@ function dispatch(): void
     $routes = [
         ['GET', '/', 'page_dashboard'],
         ['GET', '/environments', 'page_environments'],
+        ['GET', '/environments/{id}/pdf', 'page_environment_pdf'],
         ['GET', '/environments/{id}', 'page_environment'],
         ['GET', '/search', 'page_search'],
         ['GET', '/account/password', 'page_password'],
         ['POST', '/account/password', 'page_password_submit'],
+        ['POST', '/account/email', 'page_email_submit'],
         ['GET', '/app-vms', 'page_app_index'],
         ['GET', '/app-vms/new', 'page_app_new'],
         ['POST', '/app-vms', 'page_app_create'],
@@ -106,8 +109,15 @@ function dispatch(): void
         ['GET', '/views', 'page_saved_views'],
         ['GET', '/views/new', 'page_saved_view_new'],
         ['POST', '/views', 'page_saved_view_create'],
+        ['GET', '/views/{id}/pdf', 'page_saved_view_pdf'],
         ['GET', '/views/{id}', 'page_saved_view_show'],
         ['POST', '/views/{id}', 'page_saved_view_update'],
+        ['GET', '/ssl', 'page_ssl'],
+        ['GET', '/ssl/new', 'page_ssl_new'],
+        ['POST', '/ssl', 'page_ssl_create'],
+        ['GET', '/ssl/{id}/edit', 'page_ssl_edit'],
+        ['GET', '/ssl/{id}', 'page_ssl_show'],
+        ['POST', '/ssl/{id}', 'page_ssl_update'],
         ['GET', '/marks', 'page_marks'],
         ['GET', '/marks/new', 'page_mark_new'],
         ['POST', '/marks', 'page_mark_create'],

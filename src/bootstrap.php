@@ -11,6 +11,9 @@ require APP_ROOT . '/src/audit.php';
 require APP_ROOT . '/src/inventory.php';
 require APP_ROOT . '/src/marks.php';
 require APP_ROOT . '/src/saved_views.php';
+require APP_ROOT . '/src/pdf.php';
+require APP_ROOT . '/src/mail.php';
+require APP_ROOT . '/src/ssl.php';
 require APP_ROOT . '/src/router.php';
 
 function boot(): void

@@ -45,10 +45,10 @@ $action = $mode === 'edit' ? url('/db-vms/' . (int)$vm['id']) : url('/db-vms');
       <?= field_error($errors, 'environment_id') ?>
     </label>
     <label class="field">
-      <span>Stack</span>
+      <span>Tag</span>
       <input name="stack_name" list="stack-names" maxlength="190" value="<?= e($input['stack_name']) ?>" placeholder="prod_test"<?= invalid_attr($errors, 'stack_name') ?>>
       <datalist id="stack-names"></datalist>
-      <small class="hint">Use the same stack name on the APP and DB VMs that should appear next to each other. One stack can include many of each. Leave this blank for a VM with no partner.</small>
+      <small class="hint">Use the same tag on the APP and DB VMs that should appear next to each other. One tag can include many of each. Leave this blank for a VM with no partner.</small>
       <?= field_error($errors, 'stack_name') ?>
     </label>
     <label class="field">
@@ -69,6 +69,16 @@ $action = $mode === 'edit' ? url('/db-vms/' . (int)$vm['id']) : url('/db-vms');
       </select>
       <?= field_error($errors, 'redis') ?>
     </label>
+    <label class="field">
+      <span>Host</span>
+      <input name="host" maxlength="190" spellcheck="false" value="<?= e($input['host']) ?>"<?= invalid_attr($errors, 'host') ?>>
+      <small class="hint">OpenShift host this VM runs on.</small>
+      <?= field_error($errors, 'host') ?>
+    </label>
+    <label class="check">
+      <input type="checkbox" name="cv_backup" value="1"<?= (int)$input['cv_backup'] === 1 ? ' checked' : '' ?>>
+      <span>CV backup</span>
+    </label>
     <label class="field span-2">
       <span>Notes</span>
       <textarea name="notes" rows="4" maxlength="20000"<?= invalid_attr($errors, 'notes') ?>><?= e($input['notes']) ?></textarea>
@@ -83,7 +93,7 @@ $action = $mode === 'edit' ? url('/db-vms/' . (int)$vm['id']) : url('/db-vms');
 
   <fieldset class="picks">
     <legend>APP VMs</legend>
-    <p class="hint">Optional relationship. Only APP VMs in the selected environment are listed. The stack name above is what places them side by side on the environment tab.</p>
+    <p class="hint">Optional relationship. Only APP VMs in the selected environment are listed. The tag above is what places them side by side on the environment tab.</p>
     <input type="search" data-filter-target="#app-picks" placeholder="Filter APP VMs" aria-label="Filter APP VMs">
     <p class="muted" data-zone-empty hidden>No matching APP VMs in this environment.</p>
     <div class="checks scroll" id="app-picks">
