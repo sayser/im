@@ -64,11 +64,12 @@ function host_link(mixed $url): string
     return '<a href="' . e($url) . '" target="_blank" rel="noopener noreferrer">' . e($label) . '</a>';
 }
 
-function fact_line(string $label, string $value, bool $mono = false, bool $wide = false): string
+function fact_line(string $label, string $value, bool $mono = false, bool $wide = false, string $class = ''): string
 {
     $text = trim($value);
     $body = $text === '' ? '<span class="muted">—</span>' : e($text);
-    return '<div' . ($wide ? ' class="wide"' : '') . '><dt>' . e($label) . '</dt><dd class="' . ($mono ? 'mono' : 'break') . '">' . $body . '</dd></div>';
+    $classes = trim(($wide ? 'wide ' : '') . $class);
+    return '<div' . ($classes !== '' ? ' class="' . e($classes) . '"' : '') . '><dt>' . e($label) . '</dt><dd class="' . ($mono ? 'mono' : 'break') . '">' . $body . '</dd></div>';
 }
 
 function fact_row(string $label, string $html, bool $wide = false, string $class = ''): string

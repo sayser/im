@@ -640,15 +640,38 @@ body.auth {
 .vm-card:hover { border-color: rgba(214, 255, 74, 0.5); }
 .vm-card.db:hover { border-color: rgba(142, 182, 255, 0.55); }
 .vm-card.is-hit { border-color: var(--accent); background: rgba(214, 255, 74, 0.08); }
-.vm-rows { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-.vm-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px 16px; align-items: start; min-width: 0; }
-.vm-col-4 { grid-column: 4; }
-.vm-row.vm-span > div { grid-column: 1 / -1; }
-.vm-row.vm-urls { grid-template-columns: minmax(0, 1fr); }
-.vm-row.vm-urls > div,
-.vm-row.vm-urls dd { width: 100%; max-width: 100%; }
-.vm-id { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; min-width: 0; }
-.vm-card h3 { margin: 0; font-size: 1rem; font-weight: 700; letter-spacing: -0.03em; line-height: 1.2; }
+.vm-head { min-width: 0; }
+.vm-pills { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 4px; }
+.vm-facts {
+  display: grid;
+  grid-template-columns: max-content minmax(7.5rem, 12rem) max-content minmax(7.5rem, 14rem) max-content minmax(8rem, 1fr);
+  column-gap: 10px;
+  row-gap: 5px;
+  align-items: start;
+  min-width: 0;
+  margin-top: 8px;
+}
+.vm-facts > div {
+  display: grid;
+  grid-template-columns: subgrid;
+  align-items: start;
+  min-width: 0;
+}
+.vm-facts > .c1 { grid-column: 1 / span 2; }
+.vm-facts > .c2 { grid-column: 3 / span 2; }
+.vm-facts > .c3 { grid-column: 5 / span 2; }
+.vm-facts > .rest { grid-column: 3 / -1; }
+.vm-facts > .wide { grid-column: 1 / -1; }
+.vm-facts > .rest dd, .vm-facts > .wide dd { grid-column: 2 / -1; }
+.vm-card h3 {
+  margin: 0;
+  max-width: 100%;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
 .vm-card .badge, .vm-card .chip, .pill-kind, .os-pill {
   padding: 1px 7px;
   border-radius: 999px;
@@ -659,11 +682,29 @@ body.auth {
 .vm-card.app .pill-kind { background: var(--accent); color: var(--accent-ink); }
 .vm-card.db .pill-kind { background: var(--db); color: #0b1424; }
 .os-pill { background: rgba(255, 255, 255, 0.08); color: var(--text); }
-.vm-row > div { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; min-width: 0; }
-.vm-row .vm-id { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
-.vm-row dt { margin: 0; color: var(--faint); font-size: 0.72rem; font-weight: 500; }
-.vm-row dd { min-width: 0; margin: 0; font-size: 0.82rem; }
-.vm-row dd .chips { flex-wrap: wrap; }
+.vm-facts dt { margin: 0; color: var(--faint); font-size: 0.68rem; font-weight: 500; line-height: 1.35; }
+.vm-facts dd { min-width: 0; max-width: 100%; margin: 0; font-size: 0.8rem; line-height: 1.35; overflow-wrap: anywhere; }
+.vm-facts dd .chips { flex-wrap: wrap; max-width: 100%; }
+.vm-card .chip { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+.vm-links {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+  min-width: 0;
+}
+.vm-link {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  min-width: 0;
+}
+.vm-link > span:first-child { color: var(--faint); font-size: 0.68rem; line-height: 1.35; padding-top: 1px; }
+.vm-link .url-stack { min-width: 0; }
+.vm-link .url-line { overflow: hidden; text-overflow: ellipsis; }
 .vm-meta, .vm-url { color: var(--muted); font-size: 0.82rem; }
 .vm-card.placeholder {
   justify-content: center;
@@ -676,7 +717,11 @@ body.auth {
 .project-solo { padding: 0; border: 0; background: transparent; box-shadow: none; }
 
 @media (max-width: 980px) {
-  .stats, .panels, .dash-grid, .split, .form-grid, .mark-filters, .facts, .vm-facts, .pair-grid, .pair-labels { grid-template-columns: 1fr; }
+  .stats, .panels, .dash-grid, .split, .form-grid, .mark-filters, .facts, .pair-grid, .pair-labels { grid-template-columns: 1fr; }
+  .vm-facts { grid-template-columns: max-content minmax(0, 1fr); }
+  .vm-facts > .c1, .vm-facts > .c2, .vm-facts > .c3, .vm-facts > .rest, .vm-facts > .wide { grid-column: 1 / -1; }
+  .vm-facts > .rest dd, .vm-facts > .wide dd { grid-column: 2; }
+  .vm-link { grid-template-columns: 72px minmax(0, 1fr); }
   .span-2 { grid-column: auto; }
   .env-add { margin-left: 0; width: 100%; }
 }
