@@ -36,9 +36,11 @@
       <div><dt>Client</dt><dd><?= e($vm['client_name']) ?></dd></div>
       <div><dt>Environment</dt><dd><?= e($vm['zone_name']) ?></dd></div>
       <div><dt>Deployment</dt><dd><?= env_badge((string)$vm['environment_name']) ?></dd></div>
-      <div><dt>Stack</dt><dd><?= or_dash($vm['stack_name'] ?? '') ?></dd></div>
+      <div><dt>Tag</dt><dd><?= or_dash($vm['stack_name'] ?? '') ?></dd></div>
       <div><dt>OS</dt><dd><?= e($vm['os_name']) ?></dd></div>
       <div><dt>Internal IP</dt><dd class="mono"><?= e($vm['internal_ip']) ?></dd></div>
+      <div><dt>Host</dt><dd><?= or_dash($vm['host'] ?? '') ?></dd></div>
+      <div><dt>CV backup</dt><dd><?= (int)($vm['cv_backup'] ?? 0) === 1 ? '<span class="badge yes">Yes</span>' : '<span class="badge no">No</span>' ?></dd></div>
       <div><dt>Redis</dt><dd><?= (int)$vm['redis'] === 1 ? '<span class="badge yes">Yes</span>' : '<span class="badge no">No</span>' ?></dd></div>
     </dl>
     <p class="meta">

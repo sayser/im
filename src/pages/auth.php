@@ -173,9 +173,11 @@ function page_password(): void
 {
     $user = require_login();
     view('account/password', [
-        'title' => 'Password',
-        'active' => 'password',
+        'title' => 'Account',
+        'active' => 'account',
         'errors' => [],
+        'email' => user_email((int)$user['id']),
+        'emailError' => '',
         'mustChange' => (int)$user['must_change_password'] === 1,
     ]);
 }
@@ -213,9 +215,11 @@ function page_password_submit(): void
     }
     if ($errors) {
         view('account/password', [
-            'title' => 'Password',
-            'active' => 'password',
+            'title' => 'Account',
+            'active' => 'account',
             'errors' => $errors,
+            'email' => user_email((int)$user['id']),
+            'emailError' => '',
             'mustChange' => (int)$user['must_change_password'] === 1,
         ]);
         return;
@@ -228,4 +232,25 @@ function page_password_submit(): void
     begin_session((int)$user['id'], false);
     flash('ok', 'Password updated.');
     redirect('/');
+}
+
+function page_email_submit(): void
+{
+    $user = require_login();
+    csrf_check();
+    $email = clean_line((string)($_POST['email'] ?? ''));
+    $error = user_set_email((int)$user['id'], $email);
+    if ($error !== null) {
+        view('account/password', [
+            'title' => 'Account',
+            'active' => 'account',
+            'errors' => [],
+            'email' => $email,
+            'emailError' => $error,
+            'mustChange' => (int)$user['must_change_password'] === 1,
+        ]);
+        return;
+    }
+    flash('ok', 'Email address updated.');
+    redirect('/account/password');
 }

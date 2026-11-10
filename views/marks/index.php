@@ -1,5 +1,5 @@
 <div class="page-bar">
-  <p class="lede">A mark groups servers that share a job, such as a PHP upgrade. The server stays on its environment tab and in its stack.</p>
+  <p class="lede">A mark groups servers that share a job, such as a PHP upgrade. The server stays on its environment tab and in its tag.</p>
   <?php if (can_write()): ?>
     <div class="page-actions">
       <a class="btn" href="<?= e(url('/marks/new')) ?>">New mark</a>

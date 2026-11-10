@@ -20,4 +20,13 @@ return [
     // Required in production. The app refuses to start when this is false and debug is false.
     'cookie_secure' => true,
     'debug' => false,
+    // Local Postfix. PHPMailer sends SSL reminders through this server.
+    'mail' => [
+        'host' => '127.0.0.1',
+        'port' => 25,
+        'from_address' => 'inventory@example.com',
+        'from_name' => 'PT Inventory Manager',
+        // Optional. Used as the link in reminder email. Example: https://inventory.example.com
+        'public_base_url' => '',
+    ],
 ];

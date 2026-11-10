@@ -28,6 +28,7 @@
             ['inventory', 'Inventory', '/environments'],
             ['views', 'Views', '/views'],
             ['marks', 'Marks', '/marks'],
+            ['ssl', 'SSL', '/ssl'],
             ['decom', 'DECOM', '/decom'],
             ['audit', 'Audit', '/audit'],
         ];
@@ -49,7 +50,7 @@
       <?php endif; ?>
       <div class="side-foot">
         <?php if (!$locked): ?>
-          <a class="<?= $active === 'password' ? 'active' : '' ?>" href="<?= e(url('/account/password')) ?>"><?= icon('key') ?><span>Password</span></a>
+          <a class="<?= $active === 'account' ? 'active' : '' ?>" href="<?= e(url('/account/password')) ?>"><?= icon('account') ?><span>Account</span></a>
         <?php endif; ?>
         <form method="post" action="<?= e(url('/logout')) ?>">
           <?= csrf_field() ?>
@@ -68,7 +69,7 @@
           </form>
         <?php endif; ?>
         <div class="who">
-          <span class="who-name"><?= e($currentUser['display_name'] ?? '') ?></span>
+          <a class="who-name" href="<?= e(url('/account/password')) ?>"><?= e($currentUser['display_name'] ?? '') ?></a>
           <?= role_badge((string)($currentUser['role'] ?? 'view')) ?>
         </div>
       </header>

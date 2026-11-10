@@ -174,7 +174,7 @@ function app_where(array $filters, string $lifecycle): array
         append_search(
             $where,
             $params,
-            ['v.name', 'v.url', 'v.brotherhood_url', 'v.status_page_url', 'v.notes', 'v.troubleshooting', 'c.name', 'e.name', 'o.name', 'z.name', 's.name'],
+            ['v.name', 'v.url', 'v.brotherhood_url', 'v.status_page_url', 'v.host', 'v.notes', 'v.troubleshooting', 'c.name', 'e.name', 'o.name', 'z.name', 's.name'],
             [
                 ['sql' => 'EXISTS (SELECT 1 FROM app_vm_urls au WHERE au.app_vm_id = v.id AND ' . like_sql('au.url') . ')', 'binds' => 1],
                 ['sql' => 'EXISTS (SELECT 1 FROM app_vm_applications aa JOIN lookups al ON al.id = aa.application_id WHERE aa.app_vm_id = v.id AND ' . like_sql('al.name') . ')', 'binds' => 1],
@@ -210,7 +210,7 @@ function db_where(array $filters, string $lifecycle): array
         append_search(
             $where,
             $params,
-            ['v.name', 'v.notes', 'v.troubleshooting', 'c.name', 'e.name', 'o.name', 'z.name', 's.name'],
+            ['v.name', 'v.host', 'v.notes', 'v.troubleshooting', 'c.name', 'e.name', 'o.name', 'z.name', 's.name'],
             [
                 ['sql' => 'EXISTS (SELECT 1 FROM app_db_links l JOIN app_vms a ON a.id = l.app_vm_id WHERE l.db_vm_id = v.id AND (' . like_sql('a.name') . ' OR ' . like_sql('a.internal_ip') . '))', 'binds' => 2],
             ],
@@ -303,7 +303,7 @@ function app_vm_list(array $filters, string $lifecycle, bool $all = false): arra
     [$page, $pages, $offset] = paginate($total, (int)$filters['page'], 25);
     $limit = $all ? '' : ' LIMIT 25 OFFSET ' . (int)$offset;
     $rows = db_all(
-        'SELECT v.id, v.name, v.internal_ip, v.external_ip, v.url, v.brotherhood_url, v.status_page_url,
+        'SELECT v.id, v.name, v.internal_ip, v.external_ip, v.host, v.cv_backup, v.url, v.brotherhood_url, v.status_page_url,
                 v.notes, v.troubleshooting, v.lifecycle, v.created_at, v.updated_at, v.client_id, v.environment_id, v.zone_id, v.stack_id, v.os_id,
                 c.name AS client_name, e.name AS environment_name, o.name AS os_name,
                 z.name AS zone_name, s.name AS stack_name '
@@ -321,7 +321,7 @@ function db_vm_list(array $filters, string $lifecycle, bool $all = false): array
     [$page, $pages, $offset] = paginate($total, (int)$filters['page'], 25);
     $limit = $all ? '' : ' LIMIT 25 OFFSET ' . (int)$offset;
     $rows = db_all(
-        'SELECT v.id, v.name, v.internal_ip, v.redis, v.notes, v.troubleshooting, v.lifecycle, v.created_at, v.updated_at,
+        'SELECT v.id, v.name, v.internal_ip, v.host, v.cv_backup, v.redis, v.notes, v.troubleshooting, v.lifecycle, v.created_at, v.updated_at,
                 v.client_id, v.environment_id, v.zone_id, v.stack_id, v.os_id,
                 c.name AS client_name, e.name AS environment_name, o.name AS os_name,
                 z.name AS zone_name, s.name AS stack_name '
@@ -386,10 +386,12 @@ function app_snapshot(array $vm): array
         'Client' => (string)$vm['client_name'],
         'Environment' => (string)$vm['zone_name'],
         'Deployment' => (string)$vm['environment_name'],
-        'Stack' => (string)($vm['stack_name'] ?? ''),
+        'Tag' => (string)($vm['stack_name'] ?? ''),
         'OS' => (string)$vm['os_name'],
         'Internal IP' => (string)$vm['internal_ip'],
         'External IP' => (string)($vm['external_ip'] ?? ''),
+        'Host' => (string)($vm['host'] ?? ''),
+        'CV backup' => (int)($vm['cv_backup'] ?? 0) === 1 ? 'Yes' : 'No',
         'URL' => joined_urls($vm['urls'] ?? []),
         'BrotherHood URL' => (string)($vm['brotherhood_url'] ?? ''),
         'Status Page' => (string)($vm['status_page_url'] ?? ''),
@@ -407,10 +409,12 @@ function app_snapshot_input(array $in): array
         'Client' => lookup_display((int)$in['client_id']),
         'Environment' => lookup_display((int)$in['zone_id']),
         'Deployment' => lookup_display((int)$in['environment_id']),
-        'Stack' => (string)$in['stack_name'],
+        'Tag' => (string)$in['stack_name'],
         'OS' => lookup_display((int)$in['os_id']),
         'Internal IP' => (string)$in['internal_ip'],
         'External IP' => (string)$in['external_ip'],
+        'Host' => (string)$in['host'],
+        'CV backup' => (int)$in['cv_backup'] === 1 ? 'Yes' : 'No',
         'URL' => joined_urls($in['urls'] ?? []),
         'BrotherHood URL' => (string)$in['brotherhood_url'],
         'Status Page' => (string)$in['status_page_url'],
@@ -428,9 +432,11 @@ function db_snapshot(array $vm): array
         'Client' => (string)$vm['client_name'],
         'Environment' => (string)$vm['zone_name'],
         'Deployment' => (string)$vm['environment_name'],
-        'Stack' => (string)($vm['stack_name'] ?? ''),
+        'Tag' => (string)($vm['stack_name'] ?? ''),
         'OS' => (string)$vm['os_name'],
         'Internal IP' => (string)$vm['internal_ip'],
+        'Host' => (string)($vm['host'] ?? ''),
+        'CV backup' => (int)($vm['cv_backup'] ?? 0) === 1 ? 'Yes' : 'No',
         'Redis' => (int)$vm['redis'] === 1 ? 'Yes' : 'No',
         'APP VMs' => joined_names($vm['app_vms'] ?? []),
         'Notes' => (string)($vm['notes'] ?? ''),
@@ -445,9 +451,11 @@ function db_snapshot_input(array $in): array
         'Client' => lookup_display((int)$in['client_id']),
         'Environment' => lookup_display((int)$in['zone_id']),
         'Deployment' => lookup_display((int)$in['environment_id']),
-        'Stack' => (string)$in['stack_name'],
+        'Tag' => (string)$in['stack_name'],
         'OS' => lookup_display((int)$in['os_id']),
         'Internal IP' => (string)$in['internal_ip'],
+        'Host' => (string)$in['host'],
+        'CV backup' => (int)$in['cv_backup'] === 1 ? 'Yes' : 'No',
         'Redis' => ($in['redis'] ?? '') === '1' ? 'Yes' : 'No',
         'APP VMs' => vm_names_sorted('app_vms', $in['app_vm_ids']),
         'Notes' => (string)$in['notes'],
@@ -585,17 +593,41 @@ function invalid_url(string $url): ?string
         return 'Use 500 characters or fewer.';
     }
     if (str_contains($url, '\\') || preg_match('/[\x00-\x20]/', $url) === 1) {
-        return 'Enter a valid http or https URL.';
+        return 'Enter a URL without spaces or control characters.';
     }
     $parts = parse_url($url);
-    $scheme = strtolower((string)($parts['scheme'] ?? ''));
-    $host = (string)($parts['host'] ?? '');
-    $hasLogin = isset($parts['user']) || isset($parts['pass']);
-    if (!is_array($parts) || $hasLogin || $host === '' || ($scheme !== 'http' && $scheme !== 'https')) {
-        return 'Enter a valid http or https URL.';
+    if (!is_array($parts) || isset($parts['user']) || isset($parts['pass'])) {
+        return 'Enter a URL without a username or password.';
     }
-    if (filter_var($url, FILTER_VALIDATE_URL) === false) {
-        return 'Enter a valid http or https URL.';
+    $scheme = strtolower((string)($parts['scheme'] ?? ''));
+    if (in_array($scheme, ['javascript', 'data', 'file', 'vbscript'], true)) {
+        return 'That URL scheme is not allowed.';
+    }
+    if ($scheme !== '' && preg_match('/^[a-z][a-z0-9+.-]*$/', $scheme) !== 1) {
+        return 'Enter a valid URL.';
+    }
+    return null;
+}
+
+function http_url(string $url): bool
+{
+    if (invalid_url($url) !== null) {
+        return false;
+    }
+    $scheme = strtolower((string)(parse_url($url, PHP_URL_SCHEME) ?? ''));
+    return $scheme === 'http' || $scheme === 'https';
+}
+
+function invalid_host(string $host): ?string
+{
+    if ($host === '') {
+        return null;
+    }
+    if (mb_strlen($host) > 190) {
+        return 'Use 190 characters or fewer.';
+    }
+    if (preg_match('/[\x00-\x1f]/', $host) === 1) {
+        return 'Enter a host name.';
     }
     return null;
 }
@@ -660,6 +692,8 @@ function app_input_blank(): array
         'os_id' => 0,
         'internal_ip' => '',
         'external_ip' => '',
+        'host' => '',
+        'cv_backup' => 0,
         'url' => '',
         'urls' => [],
         'brotherhood_url' => '',
@@ -682,6 +716,8 @@ function app_input_from_vm(array $vm): array
         'os_id' => (int)$vm['os_id'],
         'internal_ip' => (string)$vm['internal_ip'],
         'external_ip' => (string)($vm['external_ip'] ?? ''),
+        'host' => (string)($vm['host'] ?? ''),
+        'cv_backup' => (int)($vm['cv_backup'] ?? 0),
         'url' => (string)($vm['url'] ?? ''),
         'urls' => array_values($vm['urls'] ?? []),
         'brotherhood_url' => (string)($vm['brotherhood_url'] ?? ''),
@@ -704,6 +740,8 @@ function normalize_app_post(): array
         'os_id' => (int)($_POST['os_id'] ?? 0),
         'internal_ip' => clean_line((string)($_POST['internal_ip'] ?? '')),
         'external_ip' => clean_line((string)($_POST['external_ip'] ?? '')),
+        'host' => clean_line((string)($_POST['host'] ?? '')),
+        'cv_backup' => isset($_POST['cv_backup']) ? 1 : 0,
         'urls' => posted_urls(),
         'url' => '',
         'brotherhood_url' => clean_line((string)($_POST['brotherhood_url'] ?? '')),
@@ -749,6 +787,9 @@ function validate_app(array $in, ?array $existing): array
     }
     if ($message = invalid_ip((string)$in['external_ip'], false)) {
         $errors['external_ip'] = $message;
+    }
+    if ($message = invalid_host((string)$in['host'])) {
+        $errors['host'] = $message;
     }
     if (count($in['urls']) > 20) {
         $errors['urls'] = 'Use 20 URLs or fewer.';
@@ -796,6 +837,8 @@ function db_input_blank(): array
         'environment_id' => $environmentId,
         'os_id' => 0,
         'internal_ip' => '',
+        'host' => '',
+        'cv_backup' => 0,
         'redis' => '0',
         'notes' => '',
         'troubleshooting' => '',
@@ -813,6 +856,8 @@ function db_input_from_vm(array $vm): array
         'environment_id' => (int)$vm['environment_id'],
         'os_id' => (int)$vm['os_id'],
         'internal_ip' => (string)$vm['internal_ip'],
+        'host' => (string)($vm['host'] ?? ''),
+        'cv_backup' => (int)($vm['cv_backup'] ?? 0),
         'redis' => (int)$vm['redis'] === 1 ? '1' : '0',
         'notes' => (string)($vm['notes'] ?? ''),
         'troubleshooting' => (string)($vm['troubleshooting'] ?? ''),
@@ -831,6 +876,8 @@ function normalize_db_post(): array
         'environment_id' => (int)($_POST['environment_id'] ?? 0),
         'os_id' => (int)($_POST['os_id'] ?? 0),
         'internal_ip' => clean_line((string)($_POST['internal_ip'] ?? '')),
+        'host' => clean_line((string)($_POST['host'] ?? '')),
+        'cv_backup' => isset($_POST['cv_backup']) ? 1 : 0,
         'redis' => in_array($redis, ['0', '1'], true) ? $redis : '',
         'notes' => clean_multiline((string)($_POST['notes'] ?? '')),
         'troubleshooting' => clean_multiline((string)($_POST['troubleshooting'] ?? '')),
@@ -867,6 +914,9 @@ function validate_db(array $in, ?array $existing): array
     }
     if ($message = invalid_ip((string)$in['internal_ip'], true)) {
         $errors['internal_ip'] = $message;
+    }
+    if ($message = invalid_host((string)$in['host'])) {
+        $errors['host'] = $message;
     }
     if (!in_array($in['redis'], ['0', '1'], true)) {
         $errors['redis'] = 'Select whether Redis is installed.';
@@ -971,11 +1021,11 @@ function save_app_vm(?int $id, array $in): array
         if ($creating) {
             $stackId = stack_id_for((int)$in['zone_id'], (string)$in['stack_name'], $actor);
             $id = db_insert(
-                'INSERT INTO app_vms (name, client_id, environment_id, zone_id, stack_id, os_id, internal_ip, external_ip, url, brotherhood_url, status_page_url, notes, troubleshooting, created_by, updated_by)
-                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+                'INSERT INTO app_vms (name, client_id, environment_id, zone_id, stack_id, os_id, internal_ip, external_ip, host, cv_backup, url, brotherhood_url, status_page_url, notes, troubleshooting, created_by, updated_by)
+                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
                 [
                     $in['name'], $in['client_id'], $in['environment_id'], $in['zone_id'], $stackId, $in['os_id'], $in['internal_ip'],
-                    null_if_blank($in['external_ip']), null_if_blank($in['url']), null_if_blank($in['brotherhood_url']),
+                    null_if_blank($in['external_ip']), null_if_blank($in['host']), (int)$in['cv_backup'], null_if_blank($in['url']), null_if_blank($in['brotherhood_url']),
                     null_if_blank($in['status_page_url']), null_if_blank($in['notes']), null_if_blank($in['troubleshooting']), $actor, $actor,
                 ]
             );
@@ -986,10 +1036,10 @@ function save_app_vm(?int $id, array $in): array
             $before = app_snapshot($existing);
             $stackId = stack_id_for((int)$in['zone_id'], (string)$in['stack_name'], $actor);
             db_exec(
-                'UPDATE app_vms SET name=?, client_id=?, environment_id=?, zone_id=?, stack_id=?, os_id=?, internal_ip=?, external_ip=?, url=?, brotherhood_url=?, status_page_url=?, notes=?, troubleshooting=?, updated_by=? WHERE id=?',
+                'UPDATE app_vms SET name=?, client_id=?, environment_id=?, zone_id=?, stack_id=?, os_id=?, internal_ip=?, external_ip=?, host=?, cv_backup=?, url=?, brotherhood_url=?, status_page_url=?, notes=?, troubleshooting=?, updated_by=? WHERE id=?',
                 [
                     $in['name'], $in['client_id'], $in['environment_id'], $in['zone_id'], $stackId, $in['os_id'], $in['internal_ip'],
-                    null_if_blank($in['external_ip']), null_if_blank($in['url']), null_if_blank($in['brotherhood_url']),
+                    null_if_blank($in['external_ip']), null_if_blank($in['host']), (int)$in['cv_backup'], null_if_blank($in['url']), null_if_blank($in['brotherhood_url']),
                     null_if_blank($in['status_page_url']), null_if_blank($in['notes']), null_if_blank($in['troubleshooting']), $actor, $id,
                 ]
             );
@@ -1031,10 +1081,10 @@ function save_db_vm(?int $id, array $in): array
         if ($creating) {
             $stackId = stack_id_for((int)$in['zone_id'], (string)$in['stack_name'], $actor);
             $id = db_insert(
-                'INSERT INTO db_vms (name, client_id, environment_id, zone_id, stack_id, os_id, internal_ip, redis, notes, troubleshooting, created_by, updated_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
+                'INSERT INTO db_vms (name, client_id, environment_id, zone_id, stack_id, os_id, internal_ip, host, cv_backup, redis, notes, troubleshooting, created_by, updated_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
                 [
                     $in['name'], $in['client_id'], $in['environment_id'], $in['zone_id'], $stackId, $in['os_id'], $in['internal_ip'],
-                    $in['redis'] === '1' ? 1 : 0, null_if_blank($in['notes']), null_if_blank($in['troubleshooting']), $actor, $actor,
+                    null_if_blank($in['host']), (int)$in['cv_backup'], $in['redis'] === '1' ? 1 : 0, null_if_blank($in['notes']), null_if_blank($in['troubleshooting']), $actor, $actor,
                 ]
             );
             $auditAction = 'db_vm.create';
@@ -1044,10 +1094,10 @@ function save_db_vm(?int $id, array $in): array
             $before = db_snapshot($existing);
             $stackId = stack_id_for((int)$in['zone_id'], (string)$in['stack_name'], $actor);
             db_exec(
-                'UPDATE db_vms SET name=?, client_id=?, environment_id=?, zone_id=?, stack_id=?, os_id=?, internal_ip=?, redis=?, notes=?, troubleshooting=?, updated_by=? WHERE id=?',
+                'UPDATE db_vms SET name=?, client_id=?, environment_id=?, zone_id=?, stack_id=?, os_id=?, internal_ip=?, host=?, cv_backup=?, redis=?, notes=?, troubleshooting=?, updated_by=? WHERE id=?',
                 [
                     $in['name'], $in['client_id'], $in['environment_id'], $in['zone_id'], $stackId, $in['os_id'], $in['internal_ip'],
-                    $in['redis'] === '1' ? 1 : 0, null_if_blank($in['notes']), null_if_blank($in['troubleshooting']), $actor, $id,
+                    null_if_blank($in['host']), (int)$in['cv_backup'], $in['redis'] === '1' ? 1 : 0, null_if_blank($in['notes']), null_if_blank($in['troubleshooting']), $actor, $id,
                 ]
             );
             $auditAction = 'db_vm.update';
@@ -1532,7 +1582,7 @@ function board_rows(string $which, string $where, array $params): array
 {
     if ($which === 'app') {
         $rows = db_all(
-            'SELECT v.id, v.name, v.internal_ip, v.external_ip, v.url, v.brotherhood_url, v.status_page_url,
+            'SELECT v.id, v.name, v.internal_ip, v.external_ip, v.host, v.cv_backup, v.url, v.brotherhood_url, v.status_page_url,
                     v.notes, v.lifecycle, v.zone_id, v.stack_id,
                     c.name AS client_name, e.name AS environment_name, o.name AS os_name,
                     z.name AS zone_name, z.sort_order AS zone_sort, s.name AS stack_name '
@@ -1542,7 +1592,7 @@ function board_rows(string $which, string $where, array $params): array
         return hydrate_app_rows($rows);
     }
     $rows = db_all(
-        'SELECT v.id, v.name, v.internal_ip, v.redis, v.notes, v.lifecycle, v.zone_id, v.stack_id,
+        'SELECT v.id, v.name, v.internal_ip, v.host, v.cv_backup, v.redis, v.notes, v.lifecycle, v.zone_id, v.stack_id,
                 c.name AS client_name, e.name AS environment_name, o.name AS os_name,
                 z.name AS zone_name, z.sort_order AS zone_sort, s.name AS stack_name '
         . db_from_sql() . ' WHERE ' . $where . ' ORDER BY v.name, v.id',

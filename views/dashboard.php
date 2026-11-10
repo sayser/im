@@ -47,6 +47,35 @@
 
   <section class="card">
     <div class="card-head">
+      <h2>SSL certificates</h2>
+      <a href="<?= e(url('/ssl')) ?>">All certificates</a>
+    </div>
+    <p class="hint">Expired, or expiring within four weeks.</p>
+    <?php if (!$sslSoon): ?>
+      <p class="muted">None expire in the next four weeks.</p>
+    <?php else: ?>
+      <ul class="activity">
+        <?php foreach ($sslSoon as $cert): ?>
+          <?php $left = (int)$cert['days_left']; ?>
+          <li>
+            <a href="<?= e(url('/ssl/' . (int)$cert['id'])) ?>"><?= e($cert['url']) ?></a>
+            <span>
+              <?php if ($left < 0): ?>
+                Expired <?= e(format_day($cert['expires_on'])) ?>
+              <?php elseif ($left === 0): ?>
+                Expires today
+              <?php else: ?>
+                <?= e(format_day($cert['expires_on'])) ?> · <?= $left ?> day<?= $left === 1 ? '' : 's' ?>
+              <?php endif; ?>
+            </span>
+          </li>
+        <?php endforeach; ?>
+      </ul>
+    <?php endif; ?>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
       <h2>Recent changes</h2>
       <a href="<?= e(url('/audit')) ?>">Full audit</a>
     </div>

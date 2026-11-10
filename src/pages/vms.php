@@ -398,6 +398,8 @@ function page_export_app(): void
             $row['os_name'],
             $row['internal_ip'],
             (string)($row['external_ip'] ?? ''),
+            (string)($row['host'] ?? ''),
+            (int)($row['cv_backup'] ?? 0) === 1 ? 'Yes' : 'No',
             joined_urls($row['urls'] ?? []),
             (string)($row['brotherhood_url'] ?? ''),
             (string)($row['status_page_url'] ?? ''),
@@ -412,7 +414,7 @@ function page_export_app(): void
     }
     send_csv(
         $lifecycle === 'decommissioned' ? 'app-vms-decommissioned.csv' : 'app-vms.csv',
-        ['VM Name', 'Client', 'Environment', 'Deployment', 'Stack', 'OS', 'Internal IP', 'External IP', 'URL', 'BrotherHood URL', 'Status Page', 'Applications', 'DB VMs', 'Notes', 'Troubleshooting', 'Lifecycle', 'Created', 'Updated'],
+        ['VM Name', 'Client', 'Environment', 'Deployment', 'Tag', 'OS', 'Internal IP', 'External IP', 'Host', 'CV backup', 'URL', 'BrotherHood URL', 'Status Page', 'Applications', 'DB VMs', 'Notes', 'Troubleshooting', 'Lifecycle', 'Created', 'Updated'],
         $rows
     );
 }
@@ -433,6 +435,8 @@ function page_export_db(): void
             (string)($row['stack_name'] ?? ''),
             $row['os_name'],
             $row['internal_ip'],
+            (string)($row['host'] ?? ''),
+            (int)($row['cv_backup'] ?? 0) === 1 ? 'Yes' : 'No',
             (int)$row['redis'] === 1 ? 'Yes' : 'No',
             joined_names($row['app_vms']),
             (string)($row['notes'] ?? ''),
@@ -444,7 +448,7 @@ function page_export_db(): void
     }
     send_csv(
         $lifecycle === 'decommissioned' ? 'db-vms-decommissioned.csv' : 'db-vms.csv',
-        ['VM Name', 'Client', 'Environment', 'Deployment', 'Stack', 'OS', 'Internal IP', 'Redis', 'APP VMs', 'Notes', 'Troubleshooting', 'Lifecycle', 'Created', 'Updated'],
+        ['VM Name', 'Client', 'Environment', 'Deployment', 'Tag', 'OS', 'Internal IP', 'Host', 'CV backup', 'Redis', 'APP VMs', 'Notes', 'Troubleshooting', 'Lifecycle', 'Created', 'Updated'],
         $rows
     );
 }
@@ -484,6 +488,22 @@ function page_environment(array $params = []): void
         'hits' => [],
         'show_zone' => false,
     ]);
+}
+
+function page_environment_pdf(array $params = []): void
+{
+    require_login();
+    $zone = zone_find((int)$params['id']);
+    if (!$zone || (int)$zone['active'] !== 1) {
+        abort(404);
+    }
+    $groups = environment_board((int)$zone['id']);
+    $bytes = pdf_document(
+        (string)$zone['name'],
+        'Active VMs · ' . format_when(gmdate('Y-m-d H:i:s')),
+        pdf_tag_sections($groups)
+    );
+    send_pdf(pdf_filename((string)$zone['name']), $bytes);
 }
 
 function page_search(): void

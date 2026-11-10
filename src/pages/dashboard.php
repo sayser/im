@@ -8,5 +8,6 @@ function page_dashboard(): void
         'title' => 'Dashboard',
         'active' => 'dashboard',
         'stats' => dashboard_stats(),
+        'sslSoon' => ssl_soon(28),
     ]);
 }

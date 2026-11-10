@@ -21,7 +21,7 @@ function page_user_new(): void
         'active' => 'users',
         'mode' => 'create',
         'userRow' => null,
-        'input' => ['username' => '', 'display_name' => '', 'role' => 'view', 'active' => 1],
+        'input' => ['username' => '', 'display_name' => '', 'email' => '', 'role' => 'view', 'active' => 1],
         'formError' => '',
     ]);
 }
@@ -33,10 +33,11 @@ function page_user_create(): void
     $input = [
         'username' => clean_line((string)($_POST['username'] ?? '')),
         'display_name' => clean_line((string)($_POST['display_name'] ?? '')),
+        'email' => clean_line((string)($_POST['email'] ?? '')),
         'role' => (string)($_POST['role'] ?? ''),
         'active' => 1,
     ];
-    $error = user_create($input['username'], $input['display_name'], $input['role'], (string)($_POST['password'] ?? ''));
+    $error = user_create($input['username'], $input['display_name'], $input['role'], (string)($_POST['password'] ?? ''), $input['email']);
     if ($error) {
         view('users/form', [
             'title' => 'New user',
@@ -67,6 +68,7 @@ function page_user_edit(array $params = []): void
         'input' => [
             'username' => $user['username'],
             'display_name' => $user['display_name'],
+            'email' => (string)($user['email'] ?? ''),
             'role' => $user['role'],
             'active' => $user['active'],
         ],
@@ -85,10 +87,11 @@ function page_user_update(array $params = []): void
     $input = [
         'username' => $user['username'],
         'display_name' => clean_line((string)($_POST['display_name'] ?? '')),
+        'email' => clean_line((string)($_POST['email'] ?? '')),
         'role' => (string)($_POST['role'] ?? ''),
         'active' => isset($_POST['active']) ? 1 : 0,
     ];
-    $result = user_update((int)$user['id'], $input['display_name'], $input['role'], $input['active'] === 1, (string)($_POST['password'] ?? ''));
+    $result = user_update((int)$user['id'], $input['display_name'], $input['role'], $input['active'] === 1, (string)($_POST['password'] ?? ''), $input['email']);
     if ($result === 'unchanged') {
         flash('ok', 'No changes to save.');
         redirect('/users/' . $user['id'] . '/edit');

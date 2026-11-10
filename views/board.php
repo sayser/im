@@ -19,14 +19,15 @@
     <p class="muted">An admin can add the first environment tab from Field options.</p>
   </section>
 <?php else: ?>
-  <div class="page-bar">
-    <p class="lede">APP and DB VMs that share a stack are shown side by side. A stack can hold many of each.</p>
-    <?php if (can_write()): ?>
-      <div class="page-actions">
+    <div class="page-bar">
+    <p class="lede">APP and DB VMs that share a tag are shown side by side. A tag can hold many of each.</p>
+    <div class="page-actions">
+      <a class="btn ghost" href="<?= e(url('/environments/' . (int)$zone['id'] . '/pdf')) ?>">Export PDF</a>
+      <?php if (can_write()): ?>
         <a class="btn" href="<?= e(url('/app-vms/new?zone=' . (int)$zone['id'])) ?>">Add APP VM</a>
         <a class="btn" href="<?= e(url('/db-vms/new?zone=' . (int)$zone['id'])) ?>">Add DB VM</a>
-      </div>
-    <?php endif; ?>
+      <?php endif; ?>
+    </div>
   </div>
   <?php
     $groups = $groups;

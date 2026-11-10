@@ -321,6 +321,16 @@ function display_timezone_name(): string
     }
 }
 
+function format_day(mixed $day): string
+{
+    $value = substr((string)$day, 0, 10);
+    $dt = DateTimeImmutable::createFromFormat('!Y-m-d', $value);
+    if (!$dt || $dt->format('Y-m-d') !== $value) {
+        return '';
+    }
+    return $dt->format('M j, Y');
+}
+
 function format_when(mixed $utc): string
 {
     if ($utc === null || $utc === '') {

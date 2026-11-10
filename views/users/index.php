@@ -13,13 +13,14 @@
   <div class="table-wrap">
     <table class="grid">
       <thead>
-        <tr><th>Username</th><th>Name</th><th>Role</th><th>Status</th><th>Updated</th><th></th></tr>
+        <tr><th>Username</th><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Updated</th><th></th></tr>
       </thead>
       <tbody>
         <?php foreach ($users as $row): ?>
           <tr>
             <td class="mono"><?= e($row['username']) ?></td>
             <td><?= e($row['display_name']) ?></td>
+            <td><?= e((string)($row['email'] ?? '')) ?></td>
             <td><?= role_badge((string)$row['role']) ?></td>
             <td><?= (int)$row['active'] === 1 ? '<span class="badge yes">Enabled</span>' : '<span class="badge no">Disabled</span>' ?></td>
             <td class="nowrap"><?= e(format_when($row['updated_at'])) ?></td>

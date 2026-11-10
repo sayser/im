@@ -155,7 +155,8 @@ p { margin: 0 0 12px; }
   text-overflow: ellipsis;
 }
 .who { display: flex; align-items: center; gap: 8px; }
-.who-name { color: var(--muted); }
+a.who-name { color: var(--muted); text-decoration: none; }
+a.who-name:hover { color: var(--accent); }
 .icon-btn, .nav-toggle {
   display: none;
   align-items: center;

@@ -12,6 +12,7 @@ CREATE TABLE users (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,
   username VARCHAR(64) NOT NULL,
   display_name VARCHAR(120) NOT NULL,
+  email VARCHAR(254) NULL,
   password_hash VARCHAR(255) NOT NULL,
   role ENUM('admin', 'ops', 'view') NOT NULL,
   active TINYINT(1) NOT NULL DEFAULT 1,
@@ -58,6 +59,8 @@ CREATE TABLE app_vms (
   os_id INT UNSIGNED NOT NULL,
   internal_ip VARCHAR(45) NOT NULL,
   external_ip VARCHAR(45) NULL,
+  host VARCHAR(190) NULL,
+  cv_backup TINYINT(1) NOT NULL DEFAULT 0,
   url VARCHAR(500) NULL,
   brotherhood_url VARCHAR(500) NULL,
   status_page_url VARCHAR(500) NULL,
@@ -84,7 +87,8 @@ CREATE TABLE app_vms (
   CONSTRAINT fk_app_os FOREIGN KEY (os_id) REFERENCES lookups (id),
   CONSTRAINT fk_app_decommissioned_by FOREIGN KEY (decommissioned_by) REFERENCES users (id) ON DELETE SET NULL,
   CONSTRAINT fk_app_created_by FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL,
-  CONSTRAINT fk_app_updated_by FOREIGN KEY (updated_by) REFERENCES users (id) ON DELETE SET NULL
+  CONSTRAINT fk_app_updated_by FOREIGN KEY (updated_by) REFERENCES users (id) ON DELETE SET NULL,
+  CONSTRAINT chk_app_cv_backup CHECK (cv_backup IN (0, 1))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE db_vms (
@@ -96,6 +100,8 @@ CREATE TABLE db_vms (
   stack_id INT UNSIGNED NULL,
   os_id INT UNSIGNED NOT NULL,
   internal_ip VARCHAR(45) NOT NULL,
+  host VARCHAR(190) NULL,
+  cv_backup TINYINT(1) NOT NULL DEFAULT 0,
   redis TINYINT(1) NOT NULL DEFAULT 0,
   notes MEDIUMTEXT NULL,
   troubleshooting MEDIUMTEXT NULL,
@@ -122,7 +128,8 @@ CREATE TABLE db_vms (
   CONSTRAINT fk_db_decommissioned_by FOREIGN KEY (decommissioned_by) REFERENCES users (id) ON DELETE SET NULL,
   CONSTRAINT fk_db_created_by FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL,
   CONSTRAINT fk_db_updated_by FOREIGN KEY (updated_by) REFERENCES users (id) ON DELETE SET NULL,
-  CONSTRAINT chk_db_redis CHECK (redis IN (0, 1))
+  CONSTRAINT chk_db_redis CHECK (redis IN (0, 1)),
+  CONSTRAINT chk_db_cv_backup CHECK (cv_backup IN (0, 1))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE app_vm_urls (
@@ -258,6 +265,36 @@ CREATE TABLE saved_views (
   CONSTRAINT fk_saved_view_zone FOREIGN KEY (zone_id) REFERENCES lookups (id) ON DELETE SET NULL,
   CONSTRAINT fk_saved_view_os FOREIGN KEY (os_id) REFERENCES lookups (id) ON DELETE SET NULL,
   CONSTRAINT fk_saved_view_environment FOREIGN KEY (environment_id) REFERENCES lookups (id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE ssl_certs (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  url VARCHAR(500) NOT NULL,
+  expires_on DATE NOT NULL,
+  created_by INT UNSIGNED NULL,
+  updated_by INT UNSIGNED NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_ssl_expires (expires_on),
+  CONSTRAINT fk_ssl_created_by FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL,
+  CONSTRAINT fk_ssl_updated_by FOREIGN KEY (updated_by) REFERENCES users (id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE ssl_subscriptions (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  ssl_cert_id INT UNSIGNED NOT NULL,
+  user_id INT UNSIGNED NOT NULL,
+  lead_amount SMALLINT UNSIGNED NOT NULL,
+  lead_unit ENUM('day', 'week') NOT NULL,
+  last_notified_for DATE NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_ssl_sub_user (ssl_cert_id, user_id),
+  KEY idx_ssl_sub_user (user_id),
+  CONSTRAINT fk_ssl_sub_cert FOREIGN KEY (ssl_cert_id) REFERENCES ssl_certs (id) ON DELETE CASCADE,
+  CONSTRAINT fk_ssl_sub_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO mark_colors (swatch, name, sort_order) VALUES
