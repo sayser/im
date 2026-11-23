@@ -9,6 +9,7 @@ require APP_ROOT . '/src/pages/audit.php';
 require APP_ROOT . '/src/pages/marks.php';
 require APP_ROOT . '/src/pages/saved_views.php';
 require APP_ROOT . '/src/pages/ssl.php';
+require APP_ROOT . '/src/pages/tasks.php';
 
 function match_route(string $pattern, string $path): ?array
 {
@@ -106,6 +107,13 @@ function dispatch(): void
         ['GET', '/db-vms/{id}/delete', 'page_db_delete_form'],
         ['POST', '/db-vms/{id}/delete', 'page_db_delete'],
         ['GET', '/decom', 'page_decom'],
+        ['GET', '/tasks', 'page_tasks'],
+        ['GET', '/tasks/archived', 'page_task_archived'],
+        ['GET', '/tasks/new', 'page_task_new'],
+        ['POST', '/tasks', 'page_task_create'],
+        ['GET', '/tasks/{id}/edit', 'page_task_edit'],
+        ['GET', '/tasks/{id}', 'page_task_show'],
+        ['POST', '/tasks/{id}', 'page_task_update'],
         ['GET', '/views', 'page_saved_views'],
         ['GET', '/views/new', 'page_saved_view_new'],
         ['POST', '/views', 'page_saved_view_create'],

@@ -20,7 +20,7 @@
     <label class="field">
       <span>Email</span>
       <input name="email" type="email" maxlength="254" value="<?= e($input['email'] ?? '') ?>">
-      <small class="hint">Used for SSL certificate reminders. Leave blank if this person should not get email.</small>
+      <small class="hint">Used for task notices and SSL reminders. Leave blank if this person should not get email.</small>
     </label>
     <label class="field">
       <span>Role</span>

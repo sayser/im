@@ -1,6 +1,11 @@
 <?php
 declare(strict_types=1);
 
+// SSL reminders, plus any task mail that could not be sent during the request.
+// Safe to run often; a reminder is sent once per certificate expiration.
+// */15 * * * * php /var/www/pt-inventory/bin/ssl-notify.php
+// */5 * * * * php /var/www/pt-inventory/bin/mail-send.php
+
 if (PHP_SAPI !== 'cli') {
     http_response_code(404);
     exit;
@@ -32,4 +37,9 @@ fwrite(STDOUT, 'Sent ' . (int)$result['sent'] . " reminder(s).\n");
 foreach ($result['errors'] as $error) {
     fwrite(STDERR, $error . "\n");
 }
-exit($result['errors'] === [] ? 0 : 1);
+$queued = deliver_outbox(50, 20);
+fwrite(STDOUT, 'Sent ' . (int)$queued['sent'] . " queued message(s).\n");
+if ($queued['failed'] > 0) {
+    fwrite(STDERR, "Queued mail is still waiting.\n");
+}
+exit($result['errors'] === [] && $queued['failed'] === 0 ? 0 : 1);

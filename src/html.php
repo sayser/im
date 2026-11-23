@@ -127,6 +127,7 @@ function icon(string $name): string
         'audit' => '<path d="M8 4h7l4 4v12a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><path d="M15 4v4h4M9 13h6M9 17h4"/>',
         'users' => '<path d="M16 19v-1.2A3.8 3.8 0 0 0 12.2 14H7.8A3.8 3.8 0 0 0 4 17.8V19"/><circle cx="10" cy="8" r="3"/><path d="M20 19v-1.1A3.2 3.2 0 0 0 17.4 15"/><path d="M16 5.2a2.6 2.6 0 0 1 0 5"/>',
         'lists' => '<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/>',
+        'tasks' => '<path d="M9 7h10M9 12h10M9 17h6"/><path d="M4.5 7.2l1.1 1.1 2-2M4.5 12.2l1.1 1.1 2-2M4.5 17.2l1.1 1.1 2-2"/>',
         'key' => '<circle cx="8" cy="14" r="3.2"/><path d="M11 14h9l-2 2 2 2"/>',
         'account' => '<circle cx="12" cy="8" r="3"/><path d="M5 19v-1.2A4.8 4.8 0 0 1 9.8 13h4.4A4.8 4.8 0 0 1 19 17.8V19"/>',
         'logout' => '<path d="M10 7V5H5v14h5v-2"/><path d="M10 12h9M16 8l4 4-4 4"/>',

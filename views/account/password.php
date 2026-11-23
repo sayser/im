@@ -1,7 +1,7 @@
 <?php if ($mustChange): ?>
   <div class="banner">Choose a new password before using the inventory.</div>
 <?php else: ?>
-  <p class="lede">Change your password and the email address used for SSL reminders.</p>
+  <p class="lede">Change your password and the email address used for task notices and SSL reminders.</p>
 <?php endif; ?>
 <form class="card form narrow" method="post" action="<?= e(url('/account/password')) ?>">
   <h2>Password</h2>

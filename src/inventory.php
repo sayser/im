@@ -1170,12 +1170,22 @@ function delete_vm(string $which, int $id): array
     $entity = $isApp ? 'app_vm' : 'db_vm';
     $label = $isApp ? 'APP VM' : 'DB VM';
     $table = $isApp ? 'app_vms' : 'db_vms';
-    db_tx(function () use ($vm, $snapshot, $entity, $label, $table, $id): void {
+    $side = $isApp ? 'app' : 'db';
+    $taskIds = array_map(
+        static fn(array $row): int => (int)$row['task_id'],
+        db_all('SELECT DISTINCT task_id FROM task_items WHERE vm_side = ? AND vm_id = ?', [$side, $id])
+    );
+    db_tx(function () use ($vm, $snapshot, $entity, $label, $table, $id, $side): void {
         $auditId = audit_log($entity . '.delete', 'Permanently deleted ' . $label . ' ' . $vm['name'], $entity, $id);
         write_field_history($auditId, $entity, $id, (string)$vm['name'], 'delete', snapshot_deletions($snapshot));
+        db_exec('DELETE FROM task_items WHERE vm_side = ? AND vm_id = ?', [$side, $id]);
         db_exec('DELETE FROM ' . $table . ' WHERE id = ?', [$id]);
     });
-    return ['name' => (string)$vm['name'], 'lifecycle' => (string)$vm['lifecycle']];
+    return [
+        'name' => (string)$vm['name'],
+        'lifecycle' => (string)$vm['lifecycle'],
+        'mail' => task_after_items_removed($taskIds),
+    ];
 }
 
 function lookup_kind_label(string $kind): string

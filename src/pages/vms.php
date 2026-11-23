@@ -189,7 +189,7 @@ function page_app_delete(array $params = []): void
         return;
     }
     $result = delete_vm('app', (int)$vm['id']);
-    flash('ok', 'APP VM permanently deleted.');
+    flash('ok', 'APP VM permanently deleted.' . ($result['mail'] !== [] ? ' ' . implode(' ', $result['mail']) : ''));
     redirect($result['lifecycle'] === 'decommissioned' ? '/decom?type=app' : '/app-vms');
 }
 
@@ -343,7 +343,7 @@ function page_db_delete(array $params = []): void
         return;
     }
     $result = delete_vm('db', (int)$vm['id']);
-    flash('ok', 'DB VM permanently deleted.');
+    flash('ok', 'DB VM permanently deleted.' . ($result['mail'] !== [] ? ' ' . implode(' ', $result['mail']) : ''));
     redirect($result['lifecycle'] === 'decommissioned' ? '/decom?type=db' : '/db-vms');
 }
 

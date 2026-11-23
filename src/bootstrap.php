@@ -14,6 +14,7 @@ require APP_ROOT . '/src/saved_views.php';
 require APP_ROOT . '/src/pdf.php';
 require APP_ROOT . '/src/mail.php';
 require APP_ROOT . '/src/ssl.php';
+require APP_ROOT . '/src/tasks.php';
 require APP_ROOT . '/src/router.php';
 
 function boot(): void

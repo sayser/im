@@ -48,7 +48,7 @@ function schema_ready(): bool
         return false;
     }
     $have = array_map(static fn($table): string => strtolower((string)$table), $have);
-    foreach (['users', 'lookups', 'stacks', 'app_vms', 'db_vms', 'app_vm_urls', 'app_vm_applications', 'app_db_links', 'audit_events', 'field_history', 'mark_colors', 'marks', 'mark_app_vms', 'mark_db_vms', 'saved_views', 'ssl_certs', 'ssl_subscriptions'] as $table) {
+    foreach (['users', 'lookups', 'stacks', 'app_vms', 'db_vms', 'app_vm_urls', 'app_vm_applications', 'app_db_links', 'audit_events', 'field_history', 'mark_colors', 'marks', 'mark_app_vms', 'mark_db_vms', 'saved_views', 'ssl_certs', 'ssl_subscriptions', 'tasks', 'task_items', 'task_user_status', 'mail_outbox'] as $table) {
         if (!in_array($table, $have, true)) {
             return false;
         }
@@ -81,8 +81,14 @@ function db_val(string $sql, array $params = []): mixed
 
 function db_exec(string $sql, array $params = []): void
 {
+    db_affect($sql, $params);
+}
+
+function db_affect(string $sql, array $params = []): int
+{
     $stmt = db()->prepare($sql);
     $stmt->execute(array_values($params));
+    return $stmt->rowCount();
 }
 
 function db_insert(string $sql, array $params = []): int

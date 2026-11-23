@@ -27,6 +27,7 @@
             ['dashboard', 'Dashboard', '/'],
             ['inventory', 'Inventory', '/environments'],
             ['views', 'Views', '/views'],
+            ['tasks', 'Tasks', '/tasks'],
             ['marks', 'Marks', '/marks'],
             ['ssl', 'SSL', '/ssl'],
             ['decom', 'DECOM', '/decom'],

@@ -39,6 +39,14 @@ function audit_actions(): array
         'ssl.delete' => 'SSL certificate deleted',
         'ssl.subscribe' => 'SSL reminder saved',
         'ssl.unsubscribe' => 'SSL reminder removed',
+        'task.create' => 'Task created',
+        'task.update' => 'Task updated',
+        'task.delete' => 'Task deleted',
+        'task.complete' => 'Task VM checked off',
+        'task.reopen' => 'Task VM unchecked',
+        'task.finish' => 'Task marked completed',
+        'task.archive' => 'Task archived',
+        'task.restore' => 'Task restored',
     ];
 }
 

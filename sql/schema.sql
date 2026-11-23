@@ -297,6 +297,57 @@ CREATE TABLE ssl_subscriptions (
   CONSTRAINT fk_ssl_sub_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE tasks (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  title VARCHAR(160) NOT NULL,
+  description MEDIUMTEXT NOT NULL,
+  created_by INT UNSIGNED NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  archived_at DATETIME NULL,
+  completion_notified_at DATETIME NULL,
+  PRIMARY KEY (id),
+  KEY idx_tasks_created_by (created_by, updated_at),
+  KEY idx_tasks_archived (archived_at, id),
+  CONSTRAINT fk_tasks_created_by FOREIGN KEY (created_by) REFERENCES users (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE task_items (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  task_id INT UNSIGNED NOT NULL,
+  vm_side ENUM('app', 'db') NOT NULL,
+  vm_id INT UNSIGNED NOT NULL,
+  assigned_user_id INT UNSIGNED NOT NULL,
+  completed_at DATETIME NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_task_vm (task_id, vm_side, vm_id),
+  KEY idx_task_items_user (assigned_user_id, task_id),
+  CONSTRAINT fk_task_items_task FOREIGN KEY (task_id) REFERENCES tasks (id) ON DELETE CASCADE,
+  CONSTRAINT fk_task_items_user FOREIGN KEY (assigned_user_id) REFERENCES users (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE task_user_status (
+  task_id INT UNSIGNED NOT NULL,
+  user_id INT UNSIGNED NOT NULL,
+  completed_at DATETIME NULL,
+  PRIMARY KEY (task_id, user_id),
+  CONSTRAINT fk_task_status_task FOREIGN KEY (task_id) REFERENCES tasks (id) ON DELETE CASCADE,
+  CONSTRAINT fk_task_status_user FOREIGN KEY (user_id) REFERENCES users (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE mail_outbox (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  recipient VARCHAR(254) NOT NULL,
+  subject VARCHAR(255) NOT NULL,
+  body MEDIUMTEXT NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  sent_at DATETIME NULL,
+  attempts TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  last_error VARCHAR(255) NULL,
+  PRIMARY KEY (id),
+  KEY idx_mail_outbox_pending (sent_at, id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 INSERT INTO mark_colors (swatch, name, sort_order) VALUES
   ('amber', 'Amber', 10),
   ('red', 'Red', 20),

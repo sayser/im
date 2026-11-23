@@ -43,7 +43,7 @@ $unit = $sub['lead_unit'] ?? 'day';
         </select>
       </label>
     </div>
-    <p class="hint">A daily job emails you when this certificate is inside that window.</p>
+    <p class="hint">A scheduled job emails you when this certificate is inside that window.</p>
     <?= field_error(['lead' => $leadError], 'lead') ?>
     <div class="form-actions">
       <button class="btn" type="submit"><?= $sub ? 'Update reminder' : 'Watch this certificate' ?></button>

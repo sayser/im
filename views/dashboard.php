@@ -9,6 +9,18 @@
 <?php endif; ?>
 
 <div class="dash">
+  <section class="dash-tasks">
+    <div class="page-bar">
+      <h2>Assigned tasks</h2>
+      <a href="<?= e(url('/tasks')) ?>">All tasks</a>
+    </div>
+    <?php
+      $panels = [['Assigned', $assigned, 'No open tasks.']];
+      $showPanelHeadings = false;
+      require APP_ROOT . '/views/partials/task_panels.php';
+    ?>
+  </section>
+
   <section class="dash-grid">
     <?php
       $heading = 'Environments';

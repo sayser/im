@@ -20,7 +20,9 @@ return [
     // Required in production. The app refuses to start when this is false and debug is false.
     'cookie_secure' => true,
     'debug' => false,
-    // Local Postfix. PHPMailer sends SSL reminders through this server.
+    // Local Postfix. Task notices are sent when someone is assigned or the task is completed.
+    // If Postfix does not accept the message, bin/mail-send.php retries it.
+    // SSL reminders are sent by bin/ssl-notify.php.
     'mail' => [
         'host' => '127.0.0.1',
         'port' => 25,
